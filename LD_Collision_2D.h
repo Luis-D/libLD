@@ -29,7 +29,7 @@ This library contains algorithms to handle 2D collision detection and response
 #ifndef _LD_COLLISION_H 
 #define _LD_COLLISION_H
 
-#include "LD_Dep.h"
+#include "LD_Math.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h> // <- needs libm to be linked. -lm
