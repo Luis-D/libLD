@@ -1,3 +1,0 @@
-[submodule "NASMMATH64"]
-	path = NASM/Math
-	url = git:https://github.com/Luis-D/Boring-NASM-Code/tree/master/x86-64/Math.git
