@@ -1,7 +1,7 @@
 /*
     This header declares functions and values that can be platform dependant.
     In the definitions goes part (or maybe all) of the non-portable code.
-    By default, it depends on NasmMath.
+    By default it depends on NasmMath so it must be linked.
 */
 
 #ifndef _LD_DEP_H
