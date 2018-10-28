@@ -1,0 +1,3 @@
+[submodule "Boring-NASM-Code"]
+	path = Boring-NASM-Code
+	url = https://github.com/Luis-D/Boring-NASM-Code.git
