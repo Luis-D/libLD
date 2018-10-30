@@ -1,6 +1,8 @@
 #ifndef _LD_READ_H
 #define _LD_READ_H
 
+/*This header contains functions that can come in handy when reading files */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
