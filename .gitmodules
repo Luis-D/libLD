@@ -1,3 +1,6 @@
 [submodule "Boring-NASM-Code"]
 	path = Boring-NASM-Code
 	url = https://github.com/Luis-D/Boring-NASM-Code.git
+[submodule "826683f5fcbea7c21a7555bc8ea0d6f4"]
+	path = 826683f5fcbea7c21a7555bc8ea0d6f4
+	url = https://gist.github.com/826683f5fcbea7c21a7555bc8ea0d6f4.git
