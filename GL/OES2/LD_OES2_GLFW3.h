@@ -1,5 +1,6 @@
 /*This header define rutines for OPENGL ES 2.0 context creation*/
 /*It depends on GLFW3 so it have to be linked*/
+//GLFW Copyright (c) 2002-2006 Marcus Geelnard Copyright (c) 2006-2016 Camilla Löwy
 /*GLFW3 needs to be initialized at run time*/
 /*Context have to be created prior to extension loading*/
 /*There is no need for an extension loader*/
