@@ -23,7 +23,7 @@ float StringToFloat(char * String)
   define it here*/
     #ifndef _LD_READ_READFULLTEXT_FUNC
     #define _LD_READ_READFULLTEXT_FUNC
-char * ReadFullText(FILE * file, int * String_Lenght_Return)
+    char * ReadFullText(FILE * file, int * String_Lenght_Return)
     {
         char * DynamicString=NULL;
         if(String_Lenght_Return!=NULL){*String_Lenght_Return=0;}
