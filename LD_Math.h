@@ -4,8 +4,8 @@
     By default it depends on NasmMath so it must be linked.
 */
 
-#ifndef _LD_DEP_H
-#define _LD_DEP_H
+#ifndef _LD_MATH_H
+#define _LD_MATH_H
 
 #ifdef __cplusplus
 extern "C" 
