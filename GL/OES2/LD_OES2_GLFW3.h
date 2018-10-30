@@ -47,36 +47,33 @@ GL_GLDRAWBUFFERS_NV glDrawBuffers;
 #define GL_DEPTH24_STENCIL8 GL_DEPTH24_STENCIL8_OES
 #define GL_RGB16F GL_RGB16F_EXT 
 
-
-void Extensions_Init()
+/*************************
+ * Strucs
+ * ***********************/
+typedef struct
 {
-glGenVertexArraysOES = 
-(GL_GENVERTEXARRAYS_OES)glfwGetProcAddress("glGenVertexArraysOES");
+    int Width, Height;
+    int FullScreen, RefreshRate;
+    int Resizable;
+    int MSAA;
+    char * String;
+    GLFWwindow * window;
+    GLFWmonitor * monitor;
+    void * Pointer;
+} GLFW_Context_Struct;
 
-glBindVertexArray = 
-(GL_BINDVERTEXARRAYS_OES)glfwGetProcAddress("glBindVertexArrayOES");
-
-glDeleteVertexArraysOES = 
-(GL_DELETEVERTEXARRAYS_OES)glfwGetProcAddress("glDeleteVertexArraysOES");
-
-glMapBuffer =
-(GL_MAPBUFFER_OES) glfwGetProcAddress("glMapBufferOES");
-
-glUnmapBuffer = 
-(GL_UNMAPBUFFER_OES) glfwGetProcAddress("glUnmapBufferOES");
-
-glBindBufferRange = (GL_BINDBUFFERRANGE_ARB) glfwGetProcAddress("glBindBufferRange");
-
-}
-
+GLFW_Context_Struct Context_State_Create(int Width,int Height,int FullScreen,
+int RefreshRate,int Resizable, char * String, int MSAA);
 
 
 /*************************
  * DECL
  * ***********************/
 
+void Extensions_Init(void);
+
 /*if monitor == null then window will go windowed, else it will go fullscreen*/ 
-void GLFW_FullScreen(GLFWwindow * window,GLFWmonitor * monitor)
+void GLFW_FullScreen(void * Context_State,GLFWmonitor * monitor);
 
 GLFWwindow* GLFW_Create_Window(void * Context_State);
 
