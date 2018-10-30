@@ -29,7 +29,7 @@ This library contains algorithms to handle 2D collision detection and response
 #ifndef _LD_COLLISION_H 
 #define _LD_COLLISION_H
 
-#include "LD_Math.h"
+#include "LD_Dep.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h> // <- needs libm to be linked. -lm
@@ -68,17 +68,19 @@ void Swept_AABB_2D_Create(Swept_AABB_2D_Struct * Swept_AABB_2D,
 float Center_Position_X, float Center_Position_Y,
 float Half_Extent_X,float Half_Extent_Y);
 
-int Swept_AABB_vs_Line_Segment_2D_Check(Swept_AABB_2D_Struct * Swept_AABB,
-Line_Segment_2D_Struct * Line_Segment, Collision_2D_Struct * Return_Collision,
+int Swept_AABB_vs_Line_Segment_2D_Check
+(void * _Swept_AABB_,
+Line_Segment_2D_Struct * Line_Segment, 
+Collision_2D_Struct * Return_Collision,
 float ClockWise_Multiplier);
 
-int Swept_AABB_2D_vs_Static_AABB_2D_Check(Swept_AABB_2D_Struct * Swept_AABB, 
+int Swept_AABB_2D_vs_Static_AABB_2D_Check(void * _Swept_AABB_, 
 AABB_2D_Struct * Static_AABB,Collision_2D_Struct * Collision_Data);
 
 int Swept_AABB_2D_vs_Swept_AABB_2D_Check(Swept_AABB_2D_Struct * Swept_AABB_A,
 Swept_AABB_2D_Struct * Swept_AABB_B,Collision_2D_Struct * Collision_Data);
 
-void Swept_AABB_2D_Response_Slide(Swept_AABB_2D_Struct * Swept_AABB, 
+void Swept_AABB_2D_Response_Slide(void * _Swept_AABB_, 
 Collision_2D_Struct * Collision_Data);
 
 #endif

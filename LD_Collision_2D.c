@@ -16,8 +16,10 @@ float Half_Extent_X,float Half_Extent_Y)
 }
 
 int Swept_AABB_vs_Line_Segment_2D_Check
-(Swept_AABB_2D_Struct * Swept_AABB, Line_Segment_2D_Struct * Line_Segment, Collision_2D_Struct * Return_Collision,float ClockWise_Multiplier)
+(void * _Swept_AABB_, Line_Segment_2D_Struct * Line_Segment, Collision_2D_Struct * Return_Collision,float ClockWise_Multiplier)
 {
+    Swept_AABB_2D_Struct* Swept_AABB = (Swept_AABB_2D_Struct*) _Swept_AABB_;
+
     float Line_Segment_tmp[4];
     memcpy(Line_Segment_tmp,Line_Segment,16);
     float SeparatingAxis [2];
@@ -75,8 +77,10 @@ int Swept_AABB_vs_Line_Segment_2D_Check
     return 0;
 }
 
-int Swept_AABB_2D_vs_Static_AABB_2D_Check(Swept_AABB_2D_Struct * Swept_AABB, AABB_2D_Struct * Static_AABB,Collision_2D_Struct * Collision_Data)
+int Swept_AABB_2D_vs_Static_AABB_2D_Check(void * _Swept_AABB_, AABB_2D_Struct * Static_AABB,Collision_2D_Struct * Collision_Data)
 {
+    Swept_AABB_2D_Struct* Swept_AABB = (Swept_AABB_2D_Struct*) _Swept_AABB_;
+
     float tfirst=0.0f,tlast=1.0f;
 
     float Col_Normal [3] ={1.f,1.f,1.f};
@@ -132,8 +136,10 @@ int Swept_AABB_2D_vs_Swept_AABB_2D_Check(Swept_AABB_2D_Struct * Swept_AABB_A,Swe
 }
 
 void Swept_AABB_2D_Response_Slide
-(Swept_AABB_2D_Struct * Swept_AABB, Collision_2D_Struct * Collision_Data)
+(void * _Swept_AABB_, Collision_2D_Struct * Collision_Data)
 {
+    Swept_AABB_2D_Struct* Swept_AABB = (Swept_AABB_2D_Struct*) _Swept_AABB_;
+
     float Collision_Position[2];
     V2ScalarMUL(Swept_AABB->Direction,Collision_Data->Time,Collision_Position);
     V2V2ADD(Collision_Position,Swept_AABB->Center_Position,Collision_Position);
