@@ -1,3 +1,13 @@
+/*This header define rutines for OPENGL ES 2.0 context creation*/
+/*It depends on GLFW3 so it have to be linked*/
+/*GLFW3 needs to be initialized at run time*/
+/*Context have to be created prior to extension loading*/
+/*There is no need for an extension loader*/
+/*This header already provides a function for OES 2.0 extensions load*/
+/*It also defines MACROS so the OES code can be written as GL code*/
+
+/*Luis Delgado. 2018*/
+
 #ifndef _LD_OES2_GLFW3_H
 #define _LD_OES2_GLFW3_H
 
@@ -59,11 +69,17 @@ glBindBufferRange = (GL_BINDBUFFERRANGE_ARB) glfwGetProcAddress("glBindBufferRan
 
 }
 
+
+
 /*************************
  * DECL
  * ***********************/
-void GLFW_FullScreen(GLFWwindow * window);
+
+/*if monitor == null then window will go windowed, else it will go fullscreen*/ 
+void GLFW_FullScreen(GLFWwindow * window,GLFWmonitor * monitor)
+
 GLFWwindow* GLFW_Create_Window(void * Context_State);
+
 void GLFW_Destroy_Window(void * Context_State);
 
 
