@@ -1,4 +1,4 @@
-#include "LD_OES2_GLFW3.h"
+#include "LD_OES2_FALLBACK_GLFW3.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -16,26 +16,40 @@ int RefreshRate,int Resizable, char * String, int MSAA)
 /*****************************
  * DEFS
  * ***************************/
-
-    
 void Extensions_Init(void)
 {
-       
-   
-    glBindVertexArray = 
-    (void (*)(GLuint))glfwGetProcAddress("glBindVertexArrayOES");
+    glCreateShader = (glCreateShader_type)glfwGetProcAddress("glCreateShader");
+    glCompileShader = (void (*) (GLuint))glfwGetProcAddress("glCompileShader");
+    glDeleteShader = (void (*) (GLuint))glfwGetProcAddress("glDeleteShader");
+    glGetShaderiv = (void (*) (GLuint,GLenum,GLint*))glfwGetProcAddress("glGetShaderiv");
+    glGetShaderInfoLog = (void (*) (GLuint,GLsizei,GLsizei*,GLchar*)) 
+    glfwGetProcAddress("glGetShaderInfoLog");
+    glCreateProgram =(GLuint (*) (void)) glfwGetProcAddress("glCreateProgram");
+    glShaderSource = (void (*) (GLuint,GLsizei,const GLchar * const *,const GLint*)) 
+    glfwGetProcAddress("glShaderSource");
+    glGetProgramiv = (void (*) (GLuint program,GLenum,GLint *))
+    glfwGetProcAddress("glGetProgramiv");
+    glGetProgramInfoLog = (void(*) (GLuint,GLsizei,GLsizei*,GLchar*) )
+    glfwGetProcAddress("glGetProgramInfoLog");
+    glAttachShader = (void (*) (GLuint,GLuint))glfwGetProcAddress("glAttachShader");
+    glLinkProgram = (void (*) (GLuint program))glfwGetProcAddress("glLinkProgram");
 
-    glDeleteVertexArraysOES = 
-    (void(*)(GLsizei, GLuint*))glfwGetProcAddress("glDeleteVertexArraysOES");
+/*
+    glBindVertexArray = 
+    (void (*)(GLuint))glfwGetProcAddress("glBindVertexArray");
+
+    glDeleteVertexArrays = 
+    (void(*)(GLsizei, GLuint*))glfwGetProcAddress("glDeleteVertexArrays");
 
     glMapBuffer =
-    (void*(*)(GLenum,GLenum)) glfwGetProcAddress("glMapBufferOES");
+    (void*(*)(GLenum,GLenum)) glfwGetProcAddress("glMapBuffer");
 
     glUnmapBuffer = 
-    (void(*)(GLenum)) glfwGetProcAddress("glUnmapBufferOES");
+    (void(*)(GLenum)) glfwGetProcAddress("glUnmapBuffer");
     
-glBindBufferRange 
+    glBindBufferRange 
      = (void(*)(GLenum,GLuint,GLuint,GLintptr,GLsizeiptr)) glfwGetProcAddress("glBindBufferRange");
+*/
 }  
 
 void GLFW_FullScreen(void * Context_State,GLFWmonitor * monitor)
@@ -58,11 +72,11 @@ GLFWwindow* GLFW_Create_Window(void * Context_State)
     if(Context->FullScreen){Context->monitor = glfwGetPrimaryMonitor();}
     else{Context->monitor=NULL;}
 
-
-        //glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);    
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+/*  These lines aren't supported or at least not correctly implemented yet
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+*/
 
     glfwWindowHint(GLFW_RESIZABLE,Context->Resizable);
     glfwWindowHint(GLFW_SAMPLES, Context->MSAA );

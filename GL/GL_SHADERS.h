@@ -71,7 +71,8 @@ GLuint GL_Shader_Load_EXT(const char * single_shader_file_path, GLenum shaderTyp
 
 GLuint GL_Shaders_Load(const char * vertex_file_path, const char * fragment_file_path)
 {
-    GLchar infoLog[512];
+    int INFOLOG_LEN = 512;
+    GLchar infoLog[INFOLOG_LEN];
     GLuint vertex_shader;
     GLuint fragment_shader;
     GLuint shader_program;
