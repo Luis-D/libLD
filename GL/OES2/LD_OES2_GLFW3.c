@@ -18,7 +18,7 @@ int RefreshRate,int Resizable, char * String, int MSAA)
  * ***************************/
 
     
-void Extensions_Init(void)
+void GL_Extensions_Init(void)
 {
        
    

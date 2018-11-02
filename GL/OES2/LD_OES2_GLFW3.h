@@ -78,7 +78,7 @@ int RefreshRate,int Resizable, char * String, int MSAA);
  * DECL
  * ***********************/
 
-void Extensions_Init(void);
+void GL_Extensions_Init(void);
 
 /*if monitor == null then window will go windowed, else it will go fullscreen*/ 
 void GLFW_FullScreen(void * Context_State,GLFWmonitor * monitor);

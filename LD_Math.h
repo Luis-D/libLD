@@ -7,6 +7,19 @@
 #ifndef _LD_MATH_H
 #define _LD_MATH_H
 
+   /*  The same identity matrix can be defined in many othar places
+        if it's not defined, define it here */
+    #ifndef __IDENTITY_MATRIX_4X4_FLOAT_
+    #define __IDENTITY_MATRIX_4X4_FLOAT_
+        float Identity_Matrix_4x4[16]=
+        {
+            1.f,0.f,0.f,0.f,
+            0.f,1.f,0.f,0.f,
+            0.f,0.f,1.f,0.f,
+            0.f,0.f,0.f,1.f
+        };
+    #endif  
+
 #ifdef __cplusplus
 extern "C" 
 {

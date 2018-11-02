@@ -16,41 +16,7 @@ int RefreshRate,int Resizable, char * String, int MSAA)
 /*****************************
  * DEFS
  * ***************************/
-void Extensions_Init(void)
-{
-    glCreateShader = (glCreateShader_type)glfwGetProcAddress("glCreateShader");
-    glCompileShader = (void (*) (GLuint))glfwGetProcAddress("glCompileShader");
-    glDeleteShader = (void (*) (GLuint))glfwGetProcAddress("glDeleteShader");
-    glGetShaderiv = (void (*) (GLuint,GLenum,GLint*))glfwGetProcAddress("glGetShaderiv");
-    glGetShaderInfoLog = (void (*) (GLuint,GLsizei,GLsizei*,GLchar*)) 
-    glfwGetProcAddress("glGetShaderInfoLog");
-    glCreateProgram =(GLuint (*) (void)) glfwGetProcAddress("glCreateProgram");
-    glShaderSource = (void (*) (GLuint,GLsizei,const GLchar * const *,const GLint*)) 
-    glfwGetProcAddress("glShaderSource");
-    glGetProgramiv = (void (*) (GLuint program,GLenum,GLint *))
-    glfwGetProcAddress("glGetProgramiv");
-    glGetProgramInfoLog = (void(*) (GLuint,GLsizei,GLsizei*,GLchar*) )
-    glfwGetProcAddress("glGetProgramInfoLog");
-    glAttachShader = (void (*) (GLuint,GLuint))glfwGetProcAddress("glAttachShader");
-    glLinkProgram = (void (*) (GLuint program))glfwGetProcAddress("glLinkProgram");
 
-/*
-    glBindVertexArray = 
-    (void (*)(GLuint))glfwGetProcAddress("glBindVertexArray");
-
-    glDeleteVertexArrays = 
-    (void(*)(GLsizei, GLuint*))glfwGetProcAddress("glDeleteVertexArrays");
-
-    glMapBuffer =
-    (void*(*)(GLenum,GLenum)) glfwGetProcAddress("glMapBuffer");
-
-    glUnmapBuffer = 
-    (void(*)(GLenum)) glfwGetProcAddress("glUnmapBuffer");
-    
-    glBindBufferRange 
-     = (void(*)(GLenum,GLuint,GLuint,GLintptr,GLsizeiptr)) glfwGetProcAddress("glBindBufferRange");
-*/
-}  
 
 void GLFW_FullScreen(void * Context_State,GLFWmonitor * monitor)
 {

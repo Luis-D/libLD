@@ -9,27 +9,10 @@ typedef struct IQM_RAW_Struct
 	int ModelFlags;
     int VertexCount;
 	int TrianglesCount;
-    int IndicesCount;
-    int JointsCount;
 	int Sizeof_Vec3Buffers;
     int Sizeof_Vec2Buffers;
-
-    struct _IQM_Pose_Struct
-    {
-        int parent;
-        float translate [3];
-        float rotate [4];
-        float scale [3];
-    } * Poses;
-
-    struct _IQM_Joint_Struct
-    {
-        unsigned int name;
-        int parent;
-        float translate [3];
-        float rotate [4];
-        float scale [3];
-    } * Joints;
+    int IndicesCount;
+    int JointsCount;
 
     struct _IQM_Vec3_Struct
     {
@@ -45,12 +28,28 @@ typedef struct IQM_RAW_Struct
 
     int * Indices;
 
+    struct _IQM_Joint_Struct
+    {
+        unsigned int name;
+        int parent;
+        float translate [3];
+        float rotate [4];
+        float scale [3];
+    } * Joints;
+
     struct _IQM_Blend_Struct
     {
         unsigned char Indices[4];
         unsigned char Weights[4];
     }  * Blendings;
     
+    struct 
+    {
+        int parent;
+        float translate [3];
+        float rotate [4];
+        float scale [3];
+    } * Poses;
 
 } IQM_RAW_Struct;
 
@@ -148,8 +147,13 @@ int IQM_Load_File(IQM_RAW_Struct * IQM_Model,const char * file_Path)
 }
 
 void IQM_Clear(IQM_RAW_Struct * IQM)
-{free(IQM->Vertices);free(IQM->Normals);free(IQM->UV);free(IQM->Indices);
- free(IQM->Joints);free(IQM->Poses);free(IQM->Blendings);
+{   if(IQM->Vertices!=NULL) {free(IQM->Vertices);}
+    if(IQM->Normals!=NULL)  {free(IQM->Normals);}
+    if(IQM->UV!=NULL)       {free(IQM->UV);}
+    if(IQM->Indices!=NULL)  {free(IQM->Indices);}
+    if(IQM->Joints!=NULL)   {free(IQM->Joints);}
+    if(IQM->Blendings!=NULL){free(IQM->Blendings);}
+    if(IQM->Poses!=NULL)    {free(IQM->Poses);}
 }
 
 void IQM_Destroy(IQM_RAW_Struct * IQM)
