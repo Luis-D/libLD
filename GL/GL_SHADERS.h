@@ -60,7 +60,7 @@ GLuint GL_Shader_Load_EXT(const char * single_shader_file_path, GLenum shaderTyp
     FILE * _File = fopen(single_shader_file_path,"rb");
 	char * _Source = ReadFullText(_File,NULL);
     fclose(_File);
-    printf("%s Source Code: \n%s\n",single_shader_file_path,_Source);
+    //printf("%s Source Code: \n%s\n",single_shader_file_path,_Source);
     _shader = glCreateShader(shaderType);
     glShaderSource(_shader, 1,(const char * const *) &_Source, NULL);
     glCompileShader(_shader);
