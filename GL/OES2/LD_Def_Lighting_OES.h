@@ -486,7 +486,8 @@ int LD_3D_Directional_Light_Set (DirLightStructdef * Directional_Light, float * 
 
 void LD_3D_Draw_G_Pass()
 {
-        //*****Se dibujan los modelos*****//
+        //*****Models are about to be drawn*****//
+	//*****In fact, are the buffers the ones about to be drawed*****//
     VRAMBufferStructdef * Vex =LD_3D.VRAMBuffer;
     VRAMBufferStructdef * Vend = Vex + LD_3D.Sizeof_VRAMBuffer;
 
@@ -510,7 +511,7 @@ void LD_3D_Draw_L_Pass_Ambient()
 
 void LD_3D_Draw_L_Pass_Directional(GLint Vec4_Vector_Intensity_Location, GLint Vec3_Color_Location, GLuint Square_VAO)
 {
-        //******* Se dibuja las luces direcciones, es una pasada por luz, se dibuja sobre la textura*******//
+        //******* Directional lights are about to be drawn, one pass per light, its drawed on a texture*******//
     DirLightStructdef * Vex =LD_3D.Light_System.Directional_Lights_System.LightsBuffer;
     DirLightStructdef * Vend = Vex + LD_3D.Light_System.Directional_Lights_System.Lights_Count;
 
