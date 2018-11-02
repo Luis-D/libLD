@@ -79,9 +79,27 @@ void (*glUniformMatrix2x4fv)(GLint,GLsizei,GLboolean,const GLfloat*);
 void (*glUniformMatrix4x2fv)(GLint,GLsizei,GLboolean,const GLfloat*);
 void (*glUniformMatrix3x4fv)(GLint,GLsizei,GLboolean,const GLfloat*);
 void (*glUniformMatrix4x3fv)(GLint,GLsizei,GLboolean,const GLfloat*);
+void (*glCompressedTexImage2D)
+(GLenum,GLint,GLenum,GLsizei,GLsizei,GLint,GLsizei,const GLvoid *);
+GLint (*glGetUniformLocation)(GLuint,const GLchar *);
+void (*glGenFramebuffers)(GLsizei,GLuint*);
+void (*glBindFramebuffer)(GLenum,GLuint);
+void (*glFramebufferTexture2D)(GLenum,GLenum,GLenum,GLuint,GLint);
+void (*glUseProgram)(GLuint);
 
 void GL_Extensions_Init(void)
 {
+    glUseProgram = (void(*)(GLuint))_GetProcAddress("glUseProgram");
+
+    glGenFramebuffers = (void(*)(GLsizei,GLuint*))_GetProcAddress("glGenFramebuffers");
+    glBindFramebuffer = (void(*)(GLenum,GLuint))_GetProcAddress("glBindFramebuffer");
+    glFramebufferTexture2D = (void(*)(GLenum,GLenum,GLenum,GLuint,GLint))
+    _GetProcAddress("glFramebufferTexture2D");
+    glCompressedTexImage2D = (void (*) 
+    (GLenum,GLint,GLenum,GLsizei,GLsizei,GLint,GLsizei,const GLvoid *))
+    _GetProcAddress("glCompressedTexImage2D");
+    glGetUniformLocation = (GLint (*)(GLuint,const GLchar *))
+    _GetProcAddress("glGetUniformLocation");
     glUniformMatrix2fv = (void (*) (GLint,GLsizei,GLboolean,const GLfloat*))
     _GetProcAddress("glUniformMatrix2fv");
     glUniformMatrix3fv = (void (*) (GLint,GLsizei,GLboolean,const GLfloat*))
@@ -146,7 +164,6 @@ void GL_Extensions_Init(void)
     _GetProcAddress("glUniform3uiv");
     glUniform4uiv = (void (*) (GLint,GLsizei,const GLuint*)) 
     _GetProcAddress("glUniform4uiv");  
-
     glCreateShader = (glCreateShader_type)_GetProcAddress("glCreateShader");
     glCompileShader = (void (*) (GLuint))_GetProcAddress("glCompileShader");
     glDeleteShader = (void (*) (GLuint))_GetProcAddress("glDeleteShader");
@@ -163,7 +180,8 @@ void GL_Extensions_Init(void)
     glAttachShader = (void (*) (GLuint,GLuint))_GetProcAddress("glAttachShader");
     glLinkProgram = (void (*) (GLuint program))_GetProcAddress("glLinkProgram");
     glBindVertexArray = (void (*)(GLuint))_GetProcAddress("glBindVertexArray");
-    glDeleteVertexArrays = (void(*)(GLsizei, GLuint*))_GetProcAddress("glDeleteVertexArrays");
+    glDeleteVertexArrays = (void(*)(GLsizei, GLuint*))
+    _GetProcAddress("glDeleteVertexArrays");
     glMapBuffer =(void*(*)(GLenum,GLenum)) _GetProcAddress("glMapBuffer");
     glUnmapBuffer = (void(*)(GLenum)) _GetProcAddress("glUnmapBuffer");
     glBindBufferRange = (void(*)(GLenum,GLuint,GLuint,GLintptr,GLsizeiptr)) 

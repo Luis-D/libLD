@@ -20,7 +20,8 @@ int RefreshRate,int Resizable, char * String, int MSAA)
     
 void GL_Extensions_Init(void)
 {
-       
+    glGenVertexArrays = 
+    (GL_GENVERTEXARRAYS_OES)glfwGetProcAddress("glGenVertexArraysOES");
    
     glBindVertexArray = 
     (void (*)(GLuint))glfwGetProcAddress("glBindVertexArrayOES");

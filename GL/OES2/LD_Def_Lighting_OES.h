@@ -44,7 +44,7 @@ space to then transform it back from the [0,+1] space to the [-1,+1] space.
 
 /*October 1th, 2018: Functional and stable, but not finished yet*/
 
-
+#include <strings.h>
 
 #ifndef _LD_DEF_LIGHTING_OES_H
 #define _LD_DEF_LIGHTING_OES_H
@@ -353,9 +353,12 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
     glGenBuffers(1,VBO_Normals);
     glGenBuffers(1,EBO);
 
+
+
     glBindBuffer(GL_ARRAY_BUFFER,*VBO_Position);
     glBufferData(GL_ARRAY_BUFFER,*so,NULL,*Usage);  
     uint8_t * tptr = (uint8_t*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
+   // printf("%x | %d\n ",tptr, *so);
     int sb;
     for (InstanceStructdef * iptr = InstacesBuffer_First;iptr<= InstacesBuffer_Last ;iptr++)
     {
@@ -364,6 +367,8 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
         tptr+=sb;
     }
     glUnmapBuffer(GL_ARRAY_BUFFER);
+
+   
 
     glBindBuffer(GL_ARRAY_BUFFER,*VBO_Normals);
     glBufferData(GL_ARRAY_BUFFER,*so,NULL,*Usage);  
@@ -375,6 +380,8 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
         tptr+=sb;
     }
     glUnmapBuffer(GL_ARRAY_BUFFER);
+
+
 
     glBindBuffer(GL_ARRAY_BUFFER,*VBO_UV);
     glBufferData(GL_ARRAY_BUFFER,*si,NULL,*Usage);  
@@ -389,12 +396,16 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
 
     glBindBuffer(GL_ARRAY_BUFFER,0);
 
-
+ 
 
     glGenVertexArrays(1,VAO_PositionNormal);
     glGenVertexArrays(1,VAO_PositionUV);
 
+    
+
     glBindVertexArray(*VAO_PositionNormal);
+
+
 
         glBindBuffer(GL_ARRAY_BUFFER,*VBO_Position);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 4*3, (GLvoid*)(0));
@@ -408,6 +419,7 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,*EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,*vc * 4,NULL,*Usage);  
         tptr = (uint8_t*) glMapBuffer(GL_ELEMENT_ARRAY_BUFFER,GL_WRITE_ONLY);
+        //printf("%x | %d\n ",tptr, *vc);
         for (InstanceStructdef * iptr = InstacesBuffer_First;iptr<= InstacesBuffer_Last ;iptr++)
         {
             sb = iptr->Model_Data_ptr->IndicesCount;
@@ -419,7 +431,6 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
         glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
     glBindVertexArray(0);
-
 
     glBindVertexArray(*VAO_PositionUV);
 
@@ -524,5 +535,61 @@ void LD_3D_Draw_L_Pass_Directional(GLint Vec4_Vector_Intensity_Location, GLint V
         glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
     }
 }
+
+
+    /** Mathematical operations **/
+    /*By default it uses the libLDCC LD_Math.h*/
+#include "../../LD_Math.h"
+#define __M4x4V4_PseudoV3_W1_MUL_ M4x4V4_PseudoV3_W1_MUL
+
+
+
+void LD_3D_Update()
+{
+    VRAMBufferStructdef * Vex =LD_3D.VRAMBuffer;
+    VRAMBufferStructdef * Vend = Vex + LD_3D.Sizeof_VRAMBuffer;
+
+    InstanceStructdef * Iexp;
+    InstanceStructdef * Iend;
+    struct __Vec3_Struct * Vrexp;
+    struct __Vec3_Struct * Vrend;
+
+    for(;Vex<Vend;Vex++)
+    {
+        //printf("SÍ\n");
+        if((Vex->FLAG & 1) == 0 & (Vex->FLAG & 0x80) == 0) //Si el búfer no es estático y es dibujable
+        {
+            
+            glBindBuffer(GL_ARRAY_BUFFER,Vex->VBO_Position);
+                glBufferData(GL_ARRAY_BUFFER,Vex->Sizeof_Vec3Buffers,NULL,Vex->Usage);
+                float * ptr =(float*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
+                //printf("%x\n", ptr);
+                Iend =  Vex->Last_instance; //Revisar linea para rendimiento
+                for(Iexp = Vex->First_instance; Iexp <= Iend; Iexp++)
+                {
+                    /** Actualización del modelo dinámico **/
+                    Vrexp = Iexp->Model_Data_ptr->Vertices;
+                    Vrend = Vrexp + Iexp->Model_Data_ptr->VertexCount;
+
+                    //fastmemcpy(ptr,Vrexp,Vex->Sizeof_VBO);
+                    
+                    for(;Vrexp<Vrend;Vrexp++) 
+                    {
+                        __M4x4V4_PseudoV3_W1_MUL_(Iexp->Matrix,(float*)Vrexp,ptr);
+                        ptr+=3;
+                        //fastmemcpy(ptr,Vrexp->Normal_and_V,16);
+                    }
+                    /***************************************/
+                }
+
+                glUnmapBuffer(GL_ARRAY_BUFFER);
+            glBindBuffer(GL_ARRAY_BUFFER,0);
+        }
+    } 
+}
+
+
+
+    /****************************/
 
 #endif
