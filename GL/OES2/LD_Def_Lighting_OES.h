@@ -271,22 +271,22 @@ void LD_3D_Instance_Replicate(InstanceStructdef * From, InstanceStructdef * To, 
 }
 
 
-int LD_3D_VRAMBuffer_allocate(int New_Instance_Capacity)
+int LD_3D_VRAMBuffer_allocate(int New_number_of_buffers)
 {
     if(LD_3D.VRAMBuffer == NULL)
     {
         LD_3D.VRAMBuffer = (VRAMBufferStructdef *)
-        malloc(sizeof(VRAMBufferStructdef) * New_Instance_Capacity);
+        malloc(sizeof(VRAMBufferStructdef) * New_number_of_buffers);
     }
     else
     { 
         LD_3D.VRAMBuffer = (VRAMBufferStructdef *) 
-        realloc(LD_3D.VRAMBuffer,sizeof(VRAMBufferStructdef) * New_Instance_Capacity);
+        realloc(LD_3D.VRAMBuffer,sizeof(VRAMBufferStructdef) * New_number_of_buffers);
     }
 
     if(LD_3D.VRAMBuffer == NULL){return -1;}
-    LD_3D.VRAMBuffer[New_Instance_Capacity-1].FLAG=128;
-    LD_3D.Sizeof_VRAMBuffer=New_Instance_Capacity;
+    LD_3D.VRAMBuffer[New_number_of_buffers-1].FLAG=128;
+    LD_3D.Sizeof_VRAMBuffer=New_number_of_buffers;
     return LD_3D.Sizeof_VRAMBuffer;
 }
 
@@ -425,7 +425,7 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
             sb = iptr->Model_Data_ptr->IndicesCount;
 
             memcpy(tptr,iptr->Model_Data_ptr->Indices,sb * 4);
-            tptr+=sb;
+            tptr+=sb*4 + 2; //<- I don't know, but with that sum it works;
         }
 
         glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);

@@ -102,6 +102,7 @@ int IQM_Load_File(IQM_RAW_Struct * IQM_Model,const char * file_Path)
     int tmpcalc4 =*JointsCount * sizeof(struct _IQM_Joint_Struct);
 
     IQM_Model->IndicesCount=tmpcalc2;
+    //printf("%d\n",tmpcalc2);
 
     tmpcalc+=4; //<- It's 4 instead of 3 to avoid memory reading errors.
     //It have to do with memory alignment.
