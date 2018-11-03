@@ -2,6 +2,7 @@
 
 #include "LD_C_Chrono.h"
 #include <string.h>
+#include <stdio.h>
 
 static void __static_Delta_time_init_(int Max_FPS)
 {
@@ -11,14 +12,16 @@ static void __static_Delta_time_init_(int Max_FPS)
         ptr->DBFPSNano = (1000000000L / ptr->DeltaBaseFPS);
         ptr->DFPSNano = 1000000000L / ptr->MaxFPS;
         ptr->tempCounter_A = ptr->DBFPSNano;
-        ptr->Delta_Time=0;
+        ptr->Delta_Time=0.f;
 }
 
 static void __static_Delta_time_Start_()
 {
     CHRONO_STRUCT.DELTA_TIME.Delta_Time =
-    (CHRONO_STRUCT.DELTA_TIME.tempCounter_A/1000000000.f)/
-    (CHRONO_STRUCT.DELTA_TIME.DBFPSNano/1000000000.f);
+    ((double)CHRONO_STRUCT.DELTA_TIME.tempCounter_A/1000000000.0)/
+    ((double)CHRONO_STRUCT.DELTA_TIME.DBFPSNano/1000000000.0);
+
+    //printf("%f\n", (double)CHRONO_STRUCT.DELTA_TIME.tempCounter_A);
 }
 
 #ifdef _WIN32   //<- IF WINDOWS
@@ -48,9 +51,9 @@ static void __static_Delta_time_Start_()
 
     void Delta_time_Frame_End()
     {
-        uint64_t * ptr_1 = &CHRONO_STRUCT.DELTA_TIME.end;
-        uint64_t * ptr_2 = &CHRONO_STRUCT.DELTA_TIME.duration;
-        uint64_t * ptr_4 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_A;
+        int64_t * ptr_1 = &CHRONO_STRUCT.DELTA_TIME.end;
+        int64_t * ptr_2 = &CHRONO_STRUCT.DELTA_TIME.duration;
+        int64_t * ptr_4 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_A;
 
         QueryPerformanceCounter((LARGE_INTEGER*) ptr_1);
 
