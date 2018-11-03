@@ -51,12 +51,13 @@ struct Chrono_Struct
     {
         int MaxFPS;
         int DeltaBaseFPS;
-        uint64_t DBFPSNano;
-        uint64_t tempCounter_A;
-        uint64_t DFPSNano;       
-        uint64_t start;
-        uint64_t end;
-        uint64_t duration;
+        int64_t DBFPSNano;
+        int64_t tempCounter_A;
+	int64_t tempCounter_B;
+        int64_t DFPSNano;       
+        int64_t start;
+        int64_t end;
+        int64_t duration;
         float Delta_Time;
     } DELTA_TIME; 
 }CHRONO_STRUCT;
