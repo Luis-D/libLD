@@ -123,7 +123,7 @@ static void __static_Delta_time_Start_()
         int64_t * ptr_2 = &CHRONO_STRUCT.DELTA_TIME.duration;
         int64_t * ptr_4 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_A;
         int64_t * ptr_5 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_B;
-        int64_t * ptr_6 = &CHRONO_STRUCT.DELTA_TIME.start ;
+        int64_t * ptr_6 = &CHRONO_STRUCT.DELTA_TIME.start;
 
         struct timespec time_;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_);
@@ -132,7 +132,7 @@ static void __static_Delta_time_Start_()
             *ptr_2 = (1000000000L-* ptr_6)+* ptr_1;
         }
         else{
-            *ptr_2 = *ptr_1 - tmp;
+            *ptr_2 = *ptr_1 - CHRONO_STRUCT.DELTA_TIME.start;
         }
   
         *ptr_4 = (CHRONO_STRUCT.DELTA_TIME.DFPSNano - *ptr_2);
