@@ -55,7 +55,7 @@
     }
     #endif
 
-GLuint GL_Shader_Load_EXT(const char * single_shader_file_path, GLenum shaderType,GLint * success)
+GLuint GL_Shader_Load_File_EXT(const char * single_shader_file_path, GLenum shaderType,GLint * success)
 {
     GLuint _shader;
     FILE * _File = fopen(single_shader_file_path,"rb");
@@ -71,7 +71,7 @@ GLuint GL_Shader_Load_EXT(const char * single_shader_file_path, GLenum shaderTyp
     return _shader;
 }
 
-GLuint GL_Shaders_Load(const char * vertex_file_path, const char * fragment_file_path)
+GLuint GL_Shaders_Load_File(const char * vertex_file_path, const char * fragment_file_path)
 {
     int INFOLOG_LEN = 512;
     GLchar infoLog[INFOLOG_LEN];
