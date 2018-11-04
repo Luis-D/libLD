@@ -53,13 +53,8 @@ space to then transform it back from the [0,+1] space to the [-1,+1] space.
         if it's not defined, define it here */
     #ifndef __IDENTITY_MATRIX_4X4_FLOAT_
     #define __IDENTITY_MATRIX_4X4_FLOAT_
-        float Identity_Matrix_4x4[16]=
-        {
-            1.f,0.f,0.f,0.f,
-            0.f,1.f,0.f,0.f,
-            0.f,0.f,1.f,0.f,
-            0.f,0.f,0.f,1.f
-        };
+    #define __IDENTITY_MATRIX_4X4_FLOAT_LD_DEF_L_OES_H
+        extern float Identity_Matrix_4x4[16];
     #endif  
 
 //It's similar to IQM_RAW_Struct, but it doesn't have the first two integers

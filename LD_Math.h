@@ -11,13 +11,17 @@
         if it's not defined, define it here */
     #ifndef __IDENTITY_MATRIX_4X4_FLOAT_
     #define __IDENTITY_MATRIX_4X4_FLOAT_
-        float Identity_Matrix_4x4[16]=
+    
+    extern float Identity_Matrix_4x4[16];  
+/*    
+    float Identity_Matrix_4x4[16]=
         {
             1.f,0.f,0.f,0.f,
             0.f,1.f,0.f,0.f,
             0.f,0.f,1.f,0.f,
             0.f,0.f,0.f,1.f
         };
+*/
     #endif  
 
 #ifdef __cplusplus

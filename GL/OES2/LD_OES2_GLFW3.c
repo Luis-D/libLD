@@ -17,6 +17,16 @@ int RefreshRate,int Resizable, char * String, int MSAA)
  * DEFS
  * ***************************/
 
+
+#ifdef __IDENTITY_MATRIX_4X4_FLOAT_LD_DEF_L_OES_H
+ float Identity_Matrix_4x4[16]=
+          {
+              1.f,0.f,0.f,0.f,
+              0.f,1.f,0.f,0.f,
+              0.f,0.f,1.f,0.f,
+              0.f,0.f,0.f,1.f
+          };
+#endif
     
 void GL_Extensions_Init(void)
 {

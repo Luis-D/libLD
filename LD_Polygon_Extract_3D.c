@@ -147,6 +147,6 @@ int * Edges_Count_Return)
         LinkedListCurrent=LinkedListExplorer;
     }
 
-    *Edges_Count_Return = EC;
+    if(Edges_Count_Return != NULL){*Edges_Count_Return = EC;}
     return Return;
 }
