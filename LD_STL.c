@@ -22,5 +22,5 @@ int STL_BIN_Load_NoNormals(const char * File_path,STL_Mesh_NoNormals_Struct * ST
     }
 
     fclose (file);
-    return 0;
+    return 1;
 }
