@@ -11,12 +11,10 @@
 
 int Edges_Map_2D_vs_Swept(Edges_Map_2D_struct * Edges_Map,void * Swept_Object, 
 int (*Swept_Algorithm) (void*,Line_Segment_2D_Struct*,Collision_2D_Struct*,float),
-int (*Response_Algorithm) (void*,Collision_2D_Struct*),
+void (*Response_Algorithm) (void*,Collision_2D_Struct*),
 float ClockWise_Multiplier) //-1.f
 {
     Collision_2D_Struct Collision_tmp;
-
-
     while(1)
     {
         Collision_2D_Struct Collision; Collision.Time=2.f;
