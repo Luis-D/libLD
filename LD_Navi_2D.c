@@ -15,6 +15,7 @@ void (*Response_Algorithm) (void*,Collision_2D_Struct*),
 float ClockWise_Multiplier) //-1.f
 {
     Collision_2D_Struct Collision_tmp;
+    //printf("Cant: %d\n",Edges_Map->Edges_Count);
     while(1)
     {
         Collision_2D_Struct Collision; Collision.Time=2.f;

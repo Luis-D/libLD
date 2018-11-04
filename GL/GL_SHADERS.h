@@ -15,6 +15,7 @@
     #define ReadLineBuffer 256
     char * ReadFullText(FILE * file, int * String_Lenght_Return)
     {
+        if(file == NULL){return NULL;}
         char * DynamicString=NULL;
         if(String_Lenght_Return!=NULL){*String_Lenght_Return=0;}
 
@@ -58,6 +59,7 @@ GLuint GL_Shader_Load_EXT(const char * single_shader_file_path, GLenum shaderTyp
 {
     GLuint _shader;
     FILE * _File = fopen(single_shader_file_path,"rb");
+    if(_File==NULL){return 0;}
 	char * _Source = ReadFullText(_File,NULL);
     fclose(_File);
     //printf("%s Source Code: \n%s\n",single_shader_file_path,_Source);
