@@ -275,4 +275,25 @@ int Set_AudioMixer(AudioMixer * _AudioMixer_, PaStream   **stream )
                                 _AudioMixer_);
 }
 
+void LD_Audio_Mute(struct _PA_SoundStruct_struct_ * _Audio_)
+{_Audio_->Flag |= 64;}
+
+void LD_Audio_UnMute(struct _PA_SoundStruct_struct_ * _Audio_)
+{_Audio_->Flag &= 191;}
+
+void LD_Audio_ToggleMute(struct _PA_SoundStruct_struct_ * _Audio_)
+{_Audio_->Flag ^= 64;}
+
+void LD_Audio_Play_Start(struct _PA_SoundStruct_struct_ * _Audio_)
+{
+    _Audio_->Flag &= 191;
+    _Audio_->Flag |= 34;
+}
+
+void LD_Audio_Play_Stop(struct _PA_SoundStruct_struct_ * _Audio_)
+{ _Audio_->Flag &= 245;}
+
+void LD_Audio_Play_Continue(struct _PA_SoundStruct_struct_ * _Audio_)
+{_Audio_->Flag |= 2;}
+
 #endif
