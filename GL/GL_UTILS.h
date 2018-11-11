@@ -1,6 +1,7 @@
 /*IT HAVE TO BE INCLUDED BEFORE (NOT AFTER) THE INCLUSION OF AN OPENGL HEADER*/
 
 /*This header contains useful code for OPENGL applications development*/
+/*Extensions MUST be loaded first*/
 
 
 #ifndef __GL_UTILS_H
