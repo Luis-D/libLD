@@ -18,10 +18,10 @@ static void __static_Delta_time_init_(int Max_FPS)
 static void __static_Delta_time_Start_()
 {
     CHRONO_STRUCT.DELTA_TIME.Delta_Time =
-    ((double)CHRONO_STRUCT.DELTA_TIME.tempCounter_A/1000000000.0)/
-    ((double)CHRONO_STRUCT.DELTA_TIME.DBFPSNano/1000000000.0);
+    (CHRONO_STRUCT.DELTA_TIME.tempCounter_A/1000000000.0)/
+    (CHRONO_STRUCT.DELTA_TIME.DBFPSNano/1000000000.0);
 
-    //printf("%f\n", (double)CHRONO_STRUCT.DELTA_TIME.tempCounter_A);
+   // printf("%f\n", (double)CHRONO_STRUCT.DELTA_TIME.tempCounter_A);
 }
 
 #ifdef _WIN32   //<- IF WINDOWS
@@ -51,9 +51,9 @@ static void __static_Delta_time_Start_()
 
     void Delta_time_Frame_End()
     {
-        int64_t * ptr_1 = &CHRONO_STRUCT.DELTA_TIME.end;
-        int64_t * ptr_2 = &CHRONO_STRUCT.DELTA_TIME.duration;
-        int64_t * ptr_4 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_A;
+        long * ptr_1 = &CHRONO_STRUCT.DELTA_TIME.end;
+        long * ptr_2 = &CHRONO_STRUCT.DELTA_TIME.duration;
+        long * ptr_4 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_A;
 
         QueryPerformanceCounter((LARGE_INTEGER*) ptr_1);
 
@@ -111,23 +111,24 @@ static void __static_Delta_time_Start_()
     {
         struct timespec time_;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_);
-        memcpy(&CHRONO_STRUCT.DELTA_TIME.start,&time_.tv_nsec,8);
-        memcpy(&CHRONO_STRUCT.DELTA_TIME.tempCounter_B,&time_.tv_sec,8);
+        memcpy(&CHRONO_STRUCT.DELTA_TIME.start,&time_.tv_nsec,sizeof(long));
+        memcpy(&CHRONO_STRUCT.DELTA_TIME.tempCounter_B,&time_.tv_sec,sizeof(long));
 
         __static_Delta_time_Start_();
     }
 
     void Delta_time_Frame_End()
     {
-        int64_t * ptr_1 = &CHRONO_STRUCT.DELTA_TIME.end;
-        int64_t * ptr_2 = &CHRONO_STRUCT.DELTA_TIME.duration;
-        int64_t * ptr_4 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_A;
-        int64_t * ptr_5 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_B;
-        int64_t * ptr_6 = &CHRONO_STRUCT.DELTA_TIME.start;
+        long * ptr_1 = &CHRONO_STRUCT.DELTA_TIME.end;
+        long * ptr_2 = &CHRONO_STRUCT.DELTA_TIME.duration;
+        long * ptr_4 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_A;
+        long * ptr_5 = &CHRONO_STRUCT.DELTA_TIME.tempCounter_B;
+        long * ptr_6 = &CHRONO_STRUCT.DELTA_TIME.start;
 
         struct timespec time_;
+        
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_);
-        memcpy(ptr_1,&time_.tv_nsec,8);
+        memcpy(ptr_1,&time_.tv_nsec,sizeof(long));
         if( * ptr_6 > *ptr_1){
             *ptr_2 = (1000000000L-* ptr_6)+* ptr_1;
         }
@@ -137,7 +138,7 @@ static void __static_Delta_time_Start_()
   
         *ptr_4 = (CHRONO_STRUCT.DELTA_TIME.DFPSNano - *ptr_2);
         if(*ptr_4<0){*ptr_4 = *ptr_2;}
-        memcpy(&time_.tv_nsec,ptr_4,8);
+        memcpy(&time_.tv_nsec,ptr_4,sizeof(long));
 
         if(*ptr_4>=1000000000L)
         {
@@ -146,6 +147,8 @@ static void __static_Delta_time_Start_()
         }
         else{time_.tv_sec=0;}
 
+     
+
         nanosleep(&time_,NULL);
     }
 
@@ -153,14 +156,14 @@ static void __static_Delta_time_Start_()
     {
         struct timespec time_;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_);
-        memcpy(&timer->start,&time_.tv_nsec,8);
+        memcpy(&timer->start,&time_.tv_nsec,sizeof(long));
     }
 
     void Chrono_Frame_End(Chrono_nano_Timer * timer)
     {
         struct timespec time_;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_);
-        memcpy(&timer->end,&time_.tv_nsec,8);
+        memcpy(&timer->end,&time_.tv_nsec,sizeof(long));
 
         timer->duration = timer->end - timer->start;
     }
