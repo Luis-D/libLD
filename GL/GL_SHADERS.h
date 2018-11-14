@@ -60,7 +60,7 @@ GLuint GL_Shader_Create(const char * const * String_ptr_ptr, GLenum shaderType,G
 {
     GLuint _shader;
     _shader = glCreateShader(shaderType);
-    //prinf(" Source Code: \n%s\n",*String_ptr_ptr);t
+    //printf(" Source Code: \n%s\n",*String_ptr_ptr);
     glShaderSource(_shader, 1,String_ptr_ptr, NULL);
     glCompileShader(_shader);
     if(success!=NULL){glGetShaderiv(_shader, GL_COMPILE_STATUS, success);}
@@ -71,7 +71,7 @@ GLuint GL_Shader_Load_File_EXT(const char * single_shader_file_path, GLenum shad
 {
     GLuint _shader;
     FILE * _File = fopen(single_shader_file_path,"rb");
-    if(_File==NULL){return 0;}
+    if(_File==NULL){printf("ERROR::404::\n%s\n",single_shader_file_path);return 0;}
 	char * _Source = ReadFullText(_File,NULL);
     fclose(_File);
     _shader = GL_Shader_Create((const char * const *)&_Source,shaderType,success);
@@ -79,8 +79,10 @@ GLuint GL_Shader_Load_File_EXT(const char * single_shader_file_path, GLenum shad
     return _shader;
 }
 
-GLuint GL_Shaders_Load_File(const char * vertex_file_path, const char * fragment_file_path)
+GLuint GL_Shaders_Load_File(void * vertex_file_path, void * fragment_file_path)
 {
+    //printf("Loading Shader\n");
+
     int INFOLOG_LEN = 512;
     GLchar infoLog[INFOLOG_LEN];
     GLuint vertex_shader;
@@ -88,13 +90,13 @@ GLuint GL_Shaders_Load_File(const char * vertex_file_path, const char * fragment
     GLuint shader_program;
     GLint success;
 
-    vertex_shader = GL_Shader_Load_File_EXT(vertex_file_path,GL_VERTEX_SHADER,&success);
+    vertex_shader = GL_Shader_Load_File_EXT( (char *) vertex_file_path,GL_VERTEX_SHADER,&success);
     if (!success) {
         glGetShaderInfoLog(vertex_shader, INFOLOG_LEN, NULL, infoLog);
         printf("ERROR::SHADER::VERTEX: \n%s\n", infoLog);
     }
 
-    fragment_shader = GL_Shader_Load_File_EXT(fragment_file_path,GL_FRAGMENT_SHADER,&success);
+    fragment_shader = GL_Shader_Load_File_EXT( (char *) fragment_file_path,GL_FRAGMENT_SHADER,&success);
     if (!success) {
         glGetShaderInfoLog(fragment_shader, INFOLOG_LEN, NULL, infoLog);
         printf("ERROR::SHADER::FRAGMENT: \n%s\n", infoLog);
@@ -126,13 +128,13 @@ GLuint GL_Shaders_Load_Strings(const char * Vertex_String, const char * Fragment
     GLuint shader_program;
     GLint success;
 
-    vertex_shader = GL_Shader_Create((const char * const *)Vertex_String,GL_VERTEX_SHADER,&success);
+    vertex_shader = GL_Shader_Create((const char * const *)&Vertex_String,GL_VERTEX_SHADER,&success);
     if (!success) {
         glGetShaderInfoLog(vertex_shader, INFOLOG_LEN, NULL, infoLog);
         printf("ERROR::SHADER::VERTEX: \n%s\n", infoLog);
     }
 
-    fragment_shader = GL_Shader_Create((const char * const *)Fragment_String,GL_FRAGMENT_SHADER,&success);
+    fragment_shader = GL_Shader_Create((const char * const *)&Fragment_String,GL_FRAGMENT_SHADER,&success);
     if (!success) {
         glGetShaderInfoLog(fragment_shader, INFOLOG_LEN, NULL, infoLog);
         printf("ERROR::SHADER::FRAGMENT: \n%s\n", infoLog);
