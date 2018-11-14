@@ -1,3 +1,10 @@
+/* OPENGL */
+/* This header defines a system where Textures are stored in banks */
+/* This can make easiest the deletion and administration of textures */
+/* This is useful when a centralized texture system scheme is wanted */
+
+/* - Luis Delgado. */
+
 #ifndef __GL_TEXTURE_BANK_
 #define __GL_TEXTURE_BANK_
 
@@ -73,6 +80,8 @@ GLuint * GL_TEXTURES_BANK_Texture_Load(int Bank_ID,void * File_Path_or_Texture_D
 
     GLuint * Newptr = (GLuint*) realloc(Bank->TexturesBuffer,sizeof(GLuint)*tc);
     if(Newptr == NULL){printf("ERROR::MEM\n");return NULL;}
+
+    //printf("Nptr: %x\n",Newptr);
 
     Newptr[tc-1] = TextureLoad(File_Path_or_Texture_Data,GL_LINEAR,GL_LINEAR);
 
