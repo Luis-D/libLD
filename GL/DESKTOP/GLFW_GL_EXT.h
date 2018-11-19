@@ -9,7 +9,7 @@
 
 /*************************
  * EXT
- * ***********************/
+ * ***********************/ 
 typedef GLuint (*glCreateShader_type) (GLenum);
 glCreateShader_type glCreateShader;
 void (*glCompileShader) (GLuint);
@@ -210,6 +210,77 @@ void GL_Extensions_Init(void)
     _GetProcAddress("glEnableVertexArrayAttrib");
     glDisableVertexArrayAttrib = (void (*) (GLuint,GLuint))
     _GetProcAddress("glDisableVertexArrayAttrib");   
+}
+ 
+
+void GL_Extensions_Check()
+{
+    printf("glUseProgram: %x\n",glUseProgram);
+    printf("glGenFramebuffers: %x\n",glGenFramebuffers);
+    printf("glBindFramebuffer: %x\n",glBindFramebuffer);
+    printf("glFramebufferTexture2D: %x\n",glFramebufferTexture2D);
+    printf("glCompressedTexImage2D: %x\n",glCompressedTexImage2D);
+    printf("glGetUniformLocation: %x\n",glGetUniformLocation);
+    printf("glUniformMatrix2fv: %x\n",glUniformMatrix2fv);
+    printf("glUniformMatrix3fv: %x\n",glUniformMatrix3fv);
+    printf("glUniformMatrix4fv: %x\n",glUniformMatrix4fv);
+    printf("glUniformMatrix2x3fv: %x\n",glUniformMatrix2x3fv);
+    printf("glUniformMatrix3x2fv: %x\n",glUniformMatrix3x2fv);
+    printf("glUniformMatrix2x4fv: %x\n",glUniformMatrix2x4fv);
+    printf("glUniformMatrix3x4fv: %x\n",glUniformMatrix3x4fv);
+    printf("glUniformMatrix4x3fv: %x\n",glUniformMatrix4x3fv);
+    printf("glUniform1f: %x\n",glUniform1f);
+    printf("glUniform2f: %x\n",glUniform2f);
+    printf("glUniform3f: %x\n",glUniform3f);
+    printf("glUniform4f: %x\n",glUniform4f);
+    printf("glUniform1i: %x\n",glUniform1i);
+    printf("glUniform2i: %x\n",glUniform2i);
+    printf("glUniform3i: %x\n",glUniform3i);
+    printf("glUniform4i: %x\n",glUniform4i);
+    printf("glUniform1ui: %x\n",glUniform1ui);
+    printf("glUniform2ui: %x\n",glUniform2ui);
+    printf("glUniform3ui: %x\n",glUniform3ui);
+    printf("glUniform4ui: %x\n",glUniform4ui);
+    printf("glUniform1fv: %x\n",glUniform1fv);
+    printf("glUniform2fv: %x\n",glUniform2fv);
+    printf("glUniform3fv: %x\n",glUniform3fv);
+    printf("glUniform4fv: %x\n",glUniform4fv);
+    printf("glUniform1iv: %x\n",glUniform1iv);
+    printf("glUniform2iv: %x\n",glUniform2iv);
+    printf("glUniform3iv: %x\n",glUniform3iv);
+    printf("glUniform4iv: %x\n",glUniform4iv);
+    printf("glUniform1uiv: %x\n",glUniform1uiv);
+    printf("glUniform2uiv: %x\n",glUniform2uiv);
+    printf("glUniform3uiv: %x\n",glUniform3uiv);
+    printf("glUniform4uiv: %x\n",glUniform4uiv);
+    printf("glCreateShader: %x\n",glCreateShader);
+    printf("glCompileShader: %x\n",glCompileShader);
+    printf("glDeleteShader: %x\n",glDeleteShader);
+    printf("glGetShaderiv: %x\n",glGetShaderiv);
+    printf("glGetShaderInfoLog: %x\n",glGetShaderInfoLog);
+    printf("glCreateProgram: %x\n",glCreateProgram);
+    printf("glShaderSource: %x\n",glShaderSource);
+    printf("glGetProgramiv: %x\n",glGetProgramiv);
+    printf("glGetProgramInfoLog: %x\n",glGetProgramInfoLog);
+    printf("glAttachShader: %x\n",glAttachShader);
+    printf("glLinkProgram: %x\n",glLinkProgram);
+    printf("glBindVertexArray: %x\n",glBindVertexArray);
+    printf("glDeleteVertexArrays: %x\n",glDeleteVertexArrays);
+    printf("glMapBuffer: %x\n",glMapBuffer);
+    printf("glUnmapBuffer: %x\n",glUnmapBuffer);
+    printf("glBindBuffer: %x\n",glBindBuffer);
+    printf("glBindBufferRange: %x\n",glBindBufferRange);
+    printf("glDeleteBuffers: %x\n",glDeleteBuffers);
+    printf("glGenBuffers: %x\n",glGenBuffers);
+    printf("glGenVertexArrays: %x\n",glGenVertexArrays);
+    printf("glBufferData: %x\n",glBufferData);
+    printf("glVertexAttribPointer: %x\n",glVertexAttribPointer);
+    printf("glVertexAttribIPointer: %x\n",glVertexAttribIPointer);
+    printf("glVertexAttribLPointer: %x\n",glVertexAttribLPointer);
+    printf("glEnableVertexAttribArray: %x\n",glEnableVertexAttribArray);
+    printf("glDisableVertexAttribArray: %x\n",glDisableVertexAttribArray);
+    printf("glEnableVertexArrayAttrib: %x\n",glEnableVertexArrayAttrib);
+    printf("glDisableVertexArrayAttrib: %x\n",glDisableVertexArrayAttrib); 
 }
 
 #endif

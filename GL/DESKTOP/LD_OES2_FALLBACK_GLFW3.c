@@ -38,11 +38,11 @@ GLFWwindow* GLFW_Create_Window(void * Context_State)
     if(Context->FullScreen){Context->monitor = glfwGetPrimaryMonitor();}
     else{Context->monitor=NULL;}
 
-/*  These lines aren't supported or at least not correctly implemented yet
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-*/
+
 
     glfwWindowHint(GLFW_RESIZABLE,Context->Resizable);
     glfwWindowHint(GLFW_SAMPLES, Context->MSAA );

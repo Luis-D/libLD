@@ -280,7 +280,9 @@ int LD_3D_VRAMBuffer_allocate(int New_number_of_buffers)
     }
 
     if(LD_3D.VRAMBuffer == NULL){return -1;}
-    LD_3D.VRAMBuffer[New_number_of_buffers-1].FLAG=128;
+    for(VRAMBufferStructdef * ex =LD_3D.VRAMBuffer;
+     ex < LD_3D.VRAMBuffer+New_number_of_buffers;ex++)
+    {ex->FLAG=128;}
     LD_3D.Sizeof_VRAMBuffer=New_number_of_buffers;
     return LD_3D.Sizeof_VRAMBuffer;
 }
@@ -536,6 +538,7 @@ void LD_3D_Draw_L_Pass_Directional(GLint Vec4_Vector_Intensity_Location, GLint V
     /*By default it uses the libLDCC LD_Math.h*/
 #include "../../LD_Math.h"
 #define __M4x4V4_PseudoV3_W1_MUL_ M4x4V4_PseudoV3_W1_MUL
+#define __M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL_ M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL
 
 
 
@@ -551,34 +554,50 @@ void LD_3D_Update()
 
     for(;Vex<Vend;Vex++)
     {
-        //printf("SÍ\n");
         if((Vex->FLAG & 1) == 0 & (Vex->FLAG & 0x80) == 0) //Si el búfer no es estático y es dibujable
-        {
-            
+        {     
             glBindBuffer(GL_ARRAY_BUFFER,Vex->VBO_Position);
                 glBufferData(GL_ARRAY_BUFFER,Vex->Sizeof_Vec3Buffers,NULL,Vex->Usage);
                 float * ptr =(float*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
-                //printf("%x\n", ptr);
-                Iend =  Vex->Last_instance; //Revisar linea para rendimiento
+                Iend =  Vex->Last_instance; //Check this line for a better solution
                 for(Iexp = Vex->First_instance; Iexp <= Iend; Iexp++)
                 {
-                    /** Actualización del modelo dinámico **/
+                    /** Dynamic Positions update**/
                     Vrexp = Iexp->Model_Data_ptr->Vertices;
                     Vrend = Vrexp + Iexp->Model_Data_ptr->VertexCount;
-
-                    //fastmemcpy(ptr,Vrexp,Vex->Sizeof_VBO);
                     
                     for(;Vrexp<Vrend;Vrexp++) 
                     {
                         __M4x4V4_PseudoV3_W1_MUL_(Iexp->Matrix,(float*)Vrexp,ptr);
                         ptr+=3;
-                        //fastmemcpy(ptr,Vrexp->Normal_and_V,16);
+                       
+                    }
+                    /***************************************/
+                }
+                glUnmapBuffer(GL_ARRAY_BUFFER);
+    
+
+            glBindBuffer(GL_ARRAY_BUFFER,Vex->VBO_Normals);
+                glBufferData(GL_ARRAY_BUFFER,Vex->Sizeof_Vec3Buffers,NULL,Vex->Usage);
+                 ptr =(float*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
+                Iend =  Vex->Last_instance; //Check this line for a better solution
+                for(Iexp = Vex->First_instance; Iexp <= Iend; Iexp++)
+                {
+                    /** Dynamic Normals update**/
+                    Vrexp = Iexp->Model_Data_ptr->Normals;
+                    Vrend = Vrexp + Iexp->Model_Data_ptr->VertexCount;
+                    
+                    for(;Vrexp<Vrend;Vrexp++) 
+                    {
+                        __M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL_(Iexp->Matrix,(float*)Vrexp,ptr);
+                        ptr+=3;
+                       
                     }
                     /***************************************/
                 }
 
                 glUnmapBuffer(GL_ARRAY_BUFFER);
-            glBindBuffer(GL_ARRAY_BUFFER,0);
+            glBindBuffer(GL_ARRAY_BUFFER,0);         
         }
     } 
 }
