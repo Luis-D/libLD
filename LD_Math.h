@@ -29,6 +29,10 @@ extern "C"
 {
 #endif
 
+    float V2Distance(float * Point_A, float * Point_B);
+    void V2Degrees_FPU(float * Vec2D, float * Scalar_Result);
+    void V2DegreesV2_FPU(float * Point_A, float * Point_B, float * Scalar_Result);
+
     void M4x4MUL(float * A, float *B, float * Result);
     void M4x4V4MUL(float * Matrix, float *Vector, float * Result);
     void M4x4V4_PseudoV3_W1_MUL (float * Matrix, float * Vector, float * VectorResultado);
