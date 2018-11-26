@@ -65,4 +65,6 @@ int (*Swept_Algorithm) (void*,Line_Segment_2D_Struct*,Collision_2D_Struct*,float
 void (*Response_Algorithm) (void*,Collision_2D_Struct*),
 float ClockWise_Multiplier); //-1.f
 
+void Edges_Map_2D_Clear(Edges_Map_2D_struct * Edges_Map);
+
 #endif

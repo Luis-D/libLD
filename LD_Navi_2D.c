@@ -39,3 +39,9 @@ float ClockWise_Multiplier) //-1.f
 
     return 1;
 }
+
+void Edges_Map_2D_Clear(Edges_Map_2D_struct * Edges_Map)
+{
+    Edges_Map->Edges_Count=0;
+    free(Edges_Map->EdgesBuffer);
+}
