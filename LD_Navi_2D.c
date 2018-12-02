@@ -46,7 +46,7 @@ void Edges_Map_2D_Clear(Edges_Map_2D_struct * Edges_Map)
     free(Edges_Map->EdgesBuffer);
 }
 
-int Navi_Map_Generate(float * Triangle_2D_RAW_Compatible_Buffer, int Triangles_in_Buffer,
+int Navi_Map_2D_Generate(float * Triangle_2D_RAW_Compatible_Buffer, int Triangles_in_Buffer,
 Navi_Map_2D_struct * Navi_Map)
 {
     struct _NavNode_2D_*Nodes=(struct _NavNode_2D_*)malloc(sizeof(struct _NavNode_2D_)*Triangles_in_Buffer);  
@@ -54,7 +54,35 @@ Navi_Map_2D_struct * Navi_Map)
     
     Navi_Map->Node_Count = Triangles_in_Buffer;
     Navi_Map->Node_Array = Nodes;
+    
+    struct _NavNode_2D_ * Node_End = Nodes + Triangles_in_Buffer;
 
+    for(;Nodes<Node_End;Nodes++)
+    {
+	Triangle_2D_Baricenter(Triangle_2D_RAW_Compatible_Buffer,(float*)&Nodes->x);
+	Triangle_2D_RAW_Compatible_Buffer+=(2*3);
+	Nodes->Connections_Count = 0;
+    }
 
     return 1;
+}
+
+void Navi_Map_2D_Clear(Navi_Map_2D_struct * Navi_Map)
+{
+    if(Navi_Map->Node_Count > 0)
+    {
+	struct _NavNode_2D_*Nodes = Navi_Map->Node_Array;
+	struct _NavNode_2D_*Node_End = Nodes + Navi_Map->Node_Count;
+
+	for(;Nodes<Node_End;Nodes++)
+	{
+	    if(Nodes->Connections_Count>0)
+	    {
+		free(Nodes->Connections_Array);
+	    }
+	}
+	free(Nodes);
+	Navi_Map->Node_Array=NULL;
+	Navi_Map->Node_Count=0;
+    }
 }

@@ -36,6 +36,7 @@ SOFTWARE.
 
 
 #include "LD_Collision_2D.h"
+#include "LD_Geometry.h"
 
 /************
  * Structs
@@ -55,12 +56,12 @@ typedef struct
 	float x;
 	float y;
 
-	int Connection_Count;
+	int Connections_Count;
 	struct _NavNove_2D_Con_
 	{
 	    struct _NavNode_2D_ * Node;
 	    float Common_Edge_Length;
-	} * Connection;
+	} * Connections_Array;
     } * Node_Array;
 
 }Navi_Map_2D_struct;
