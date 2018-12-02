@@ -150,3 +150,44 @@ int * Edges_Count_Return)
     if(Edges_Count_Return != NULL){*Edges_Count_Return = EC;}
     return Return;
 }
+
+float * Triangle_3D_to_2D
+    (float * Compatible_RAW_3D_Triangle_Buffer, int Number_of_Triangles_in_Buffer,
+    char Component_to_eliminate)
+{   
+    Triangle_2D_struct * RET = (Triangle_2D_struct*) 
+    malloc(sizeof(Triangle_2D_struct)*Number_of_Triangles_in_Buffer);
+  
+    if(RET==NULL){return NULL;}
+ 
+    int tmp = 0; int SZ = Number_of_Triangles_in_Buffer * 3;
+
+    float * RETExp = (float*) RET;
+    float * T3DExp = Compatible_RAW_3D_Triangle_Buffer;
+
+    switch(Component_to_eliminate)
+    {
+	case 0:
+	{
+	    T3DExp++;
+	    break;
+	}
+	
+	case 1:
+	{
+	    memcpy(RETExp,T3DExp,sizeof(float));
+	    RETExp++;T3DExp+=2;
+	    break;
+	}
+    }
+
+    for(;tmp<SZ;tmp++)
+    {
+	memcpy(RETExp,T3DExp, sizeof(float)*2);
+	T3DExp+=3; //Jump three floats, jump to the next vertex
+	RETExp+=2; //Jump two floats, jump to the next vertex
+    }
+ 
+    return (float*) RET;
+}
+

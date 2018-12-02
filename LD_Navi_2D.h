@@ -47,7 +47,23 @@ typedef struct
     Line_Segment_2D_Struct * EdgesBuffer;
 }Edges_Map_2D_struct;
 
+typedef struct
+{
+    int Node_Count;
+    struct _NavNode_2D_
+    {
+	float x;
+	float y;
 
+	int Connection_Count;
+	struct _NavNove_2D_Con_
+	{
+	    struct _NavNode_2D_ * Node;
+	    float Common_Edge_Length;
+	} * Connection;
+    } * Node_Array;
+
+}Navi_Map_2D_struct;
 
 
 
@@ -66,5 +82,16 @@ void (*Response_Algorithm) (void*,Collision_2D_Struct*),
 float ClockWise_Multiplier); //-1.f
 
 void Edges_Map_2D_Clear(Edges_Map_2D_struct * Edges_Map);
+
+/******************************************
+ *This function recieves a RAW buffer of 2D Triangles and a number of triangles
+ *This function generates a graph where each node is the baricenter of each triangle
+ *This node can be used for algoritms such as the A* algorithm
+ * *****************************************/
+int Navi_Map_2D_Generate(float * Triangle_2D_RAW_Compatible_Buffer, int Triangles_in_Buffer,
+Navi_Map_2D_struct * Navi_Map);
+
+void Navi_Map_2D_clear(Navi_Map_2D_struct * Navi_Map);
+
 
 #endif

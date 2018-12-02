@@ -38,6 +38,11 @@ typedef struct
 
 typedef struct
 {
+    float x; float y;
+}Vertex_2D_Struct;
+
+typedef struct
+{
     float Point_A[3];
     float Point_B[3];
 }Edge_3D_Struct;
@@ -54,6 +59,13 @@ typedef struct
     Vertex_3D_Struct Point_B;
     Vertex_3D_Struct Point_C;
 }Triangle_3D_struct;
+
+typedef struct
+{
+    Vertex_2D_Struct Point_A;
+    Vertex_2D_Struct Point_B;
+    Vertex_2D_Struct Point_C;
+}Triangle_2D_struct;
 
 typedef struct Edge_2D_Linked_List_Struct
 {
@@ -76,5 +88,14 @@ typedef struct Edge_2D_Linked_List_Struct
 Edge_2D_Struct * Triangles_3D_Extract_Border_Edges_to_2D_no_Z
 (float * Compatible_RAW_3D_Triangles_Buffer,int Number_of_Triangles_in_Buffer,
 int * Edges_Count_Return);
+
+/**************************************************
+	Given a mesh made out of triangles with three components,
+	this algoritms eliminates one component.
+	The result is an array of triangles with two componenets.
+**************************************************/
+float * Triangle_3D_to_2D 
+(float * Compatible_RAW_3D_Triangle_Buffer, int Number_of_Triangles_in_Buffer,
+char Component_to_eliminate);//Component 0 = X, Component 1 = Y, Component 2 = Z
 
 #endif
