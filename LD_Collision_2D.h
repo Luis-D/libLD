@@ -30,6 +30,7 @@ This library contains algorithms to handle 2D collision detection and response
 #define _LD_COLLISION_H
 
 #include "LD_Math.h"
+#include "LD_Geometry.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h> // <- needs libm to be linked. -lm
@@ -44,8 +45,8 @@ typedef struct AABB_2D_Struct
 typedef struct Swept_AABB_2D_Struct
 {
     float Center_Position[2];
-    float Half_Extent[2];
     float Direction[2];
+    float Half_Extent[2];
 } Swept_AABB_2D_Struct;
 
 typedef struct Line_Segment_2D_Struct
