@@ -289,9 +289,11 @@ int LD_3D_VRAMBuffer_allocate(int New_number_of_buffers)
 
 void LD_3D_VRAMBuffer_Clear(VRAMBufferStructdef* VRAMBuffer,char glDelete)
 {
+    printf("lololo\n");
     VRAMBuffer->Sizeof_Vec3Buffers=0;
     VRAMBuffer->Sizeof_Vec2Buffers=0;
     VRAMBuffer->IndicesCount=0;
+    VRAMBuffer->FLAG |= 0x80;
     if(glDelete)
     {
         glDeleteBuffers(1,&VRAMBuffer->VBO_Position);
@@ -331,7 +333,6 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
         *so += ex->Model_Data_ptr->Sizeof_Vec3Buffers;
         *si += ex->Model_Data_ptr->Sizeof_Vec2Buffers;
         *vc += ex->Model_Data_ptr->IndicesCount;
-        printf("%d\n",*vc);
     }
 
     
