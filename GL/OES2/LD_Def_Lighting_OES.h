@@ -331,7 +331,10 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
         *so += ex->Model_Data_ptr->Sizeof_Vec3Buffers;
         *si += ex->Model_Data_ptr->Sizeof_Vec2Buffers;
         *vc += ex->Model_Data_ptr->IndicesCount;
+        printf("%d\n",*vc);
     }
+
+    
 
     GLuint * VBO_Position = &VRAMPtr->VBO_Position;
     GLuint * VBO_UV = &VRAMPtr->VBO_UV;
@@ -415,15 +418,32 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,*EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,*vc * 4,NULL,*Usage);  
+        /*
         tptr = (uint8_t*) glMapBuffer(GL_ELEMENT_ARRAY_BUFFER,GL_WRITE_ONLY);
         //printf("%x | %d\n ",tptr, *vc);
         for (InstanceStructdef * iptr = InstacesBuffer_First;iptr<= InstacesBuffer_Last ;iptr++)
         {
             sb = iptr->Model_Data_ptr->IndicesCount;
-
             memcpy(tptr,iptr->Model_Data_ptr->Indices,sb * 4);
-            tptr+=sb*4 + 2; //<- I don't know, but with that sum it works;
+            tptr+=(sb*4) ; //<- I don't know, but with that sum it works;
+        }*/
+
+        int * indptr = (int *) glMapBuffer(GL_ELEMENT_ARRAY_BUFFER,GL_WRITE_ONLY);
+        int IndexIndex=0,IndexAcc=0;
+        for (InstanceStructdef * iptr = InstacesBuffer_First;iptr<= InstacesBuffer_Last ;iptr++)
+        {
+            sb = iptr->Model_Data_ptr->IndicesCount;
+            for(int iii=0;iii<sb;iii++)
+            {
+                //printf("%d\n",iptr->Model_Data_ptr->Indices[iii]+ IndexAcc );
+                indptr[IndexIndex] = iptr->Model_Data_ptr->Indices[iii] + IndexAcc ;
+                IndexIndex++;
+            }
+            //printf("->>%d\n",iptr->Model_Data_ptr->VertexCount);
+            IndexAcc+=iptr->Model_Data_ptr->VertexCount;
         }
+
+
 
         glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
