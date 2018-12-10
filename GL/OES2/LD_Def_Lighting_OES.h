@@ -214,11 +214,11 @@ LD_Model_Object_Struct * LD_3D_ModelsLinkedList_Append(void * Data_pointer)
     return Return;
 }
 
-void LD_3D_ModelsLinkedList_System_Delete()
+void LD_3D_ModelsLinkedList_System_Delete(struct LD_ModelsLinkedList_Struct * Stack_ptr)
 {
-    LD_3D.Models_Count=0;
+    if(Stack_ptr==NULL){Stack_ptr=LD_3D.ModelsLinkedList_First;}
 
-    struct LD_ModelsLinkedList_Struct * Exp = LD_3D.ModelsLinkedList_First;
+    struct LD_ModelsLinkedList_Struct * Exp = Stack_ptr;
     struct LD_ModelsLinkedList_Struct * tmp;
 
 
@@ -228,6 +228,7 @@ void LD_3D_ModelsLinkedList_System_Delete()
         LD_Model_Object_Clear(&Exp->Model);
         free(Exp);
         Exp= tmp;
+        LD_3D.Models_Count--;
     }
 }
 
