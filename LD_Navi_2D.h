@@ -59,15 +59,15 @@ struct Navi_Map_2D_struct
 	int Connections_Count;
 	struct _NavNode_2D_Con_
 	{
-	    struct _NavNode_2D_ * Node;
 	    float Common_Edge_Length;
+	    struct _NavNode_2D_ * Node;
 	} * Connections_Array;
     } * Node_Array;
 
 };
 
 typedef struct Navi_Map_2D_struct Navi_Map_2D_struct;
-
+typedef struct _NavNode_2D_ _NavNode_2D_;
 
 /************
  * DECL
@@ -95,5 +95,6 @@ Navi_Map_2D_struct * Navi_Map);
 
 void Navi_Map_2D_clear(Navi_Map_2D_struct * Navi_Map);
 
+char Navi_Map_2D_FindPath(Navi_Map_2D_struct * Navi_Map,_NavNode_2D_  * Origin,_NavNode_2D_ * Destiny);
 
 #endif

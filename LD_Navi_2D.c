@@ -155,3 +155,18 @@ void Navi_Map_2D_Clear(Navi_Map_2D_struct * Navi_Map)
 	Navi_Map->Node_Count=0;
     }
 }
+
+
+
+char Navi_Map_2D_FindPath(Navi_Map_2D_struct * Navi_Map, _NavNode_2D_ * Origin, _NavNode_2D_ * Destiny,float Object_Radius)
+{
+    float DestinyPoint[2]; memcpy(DestinyPoint,&Destiny->x,8);
+    char Unsolved=1;
+    _NavNode_2D_ * Explorer = Origin;
+
+    while(Unsolved)
+    {
+	
+    }
+        
+}
