@@ -48,7 +48,7 @@ typedef struct
     Line_Segment_2D_Struct * EdgesBuffer;
 }Edges_Map_2D_struct;
 
-typedef struct
+struct Navi_Map_2D_struct
 {
     int Node_Count;
     struct _NavNode_2D_
@@ -57,15 +57,16 @@ typedef struct
 	float y;
 
 	int Connections_Count;
-	struct _NavNove_2D_Con_
+	struct _NavNode_2D_Con_
 	{
 	    struct _NavNode_2D_ * Node;
 	    float Common_Edge_Length;
 	} * Connections_Array;
     } * Node_Array;
 
-}Navi_Map_2D_struct;
+};
 
+typedef struct Navi_Map_2D_struct Navi_Map_2D_struct;
 
 
 /************

@@ -1,12 +1,13 @@
 #include "LD_Polygon_Extract_3D.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 
-/*****************************************************/
-/*  DEFS
-/*****************************************************/
+/*****************************************************
+ *  DEFS
+******************************************************/
 
 Edge_2D_Struct * Triangles_3D_Extract_Border_Edges_to_2D_no_Z
 (float * Compatible_RAW_3D_Triangles_Buffer,
@@ -183,9 +184,12 @@ float * Triangle_3D_to_2D
 
     for(;tmp<SZ;tmp++)
     {
+//	printf("(%f,%f,%f) =",T3DExp[0],T3DExp[1],T3DExp[2]);
 	memcpy(RETExp,T3DExp, sizeof(float)*2);
+//	printf("(%f,%f)\n",RETExp[0],RETExp[1]);
 	T3DExp+=3; //Jump three floats, jump to the next vertex
 	RETExp+=2; //Jump two floats, jump to the next vertex
+    
     }
  
     return (float*) RET;
