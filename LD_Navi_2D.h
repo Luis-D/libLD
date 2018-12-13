@@ -111,6 +111,6 @@ Navi_Map_2D_struct * Navi_Map);
 void Navi_Map_2D_clear(Navi_Map_2D_struct * Navi_Map);
 
 Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Destiny, float Object_Radius);
-void Path_2D_destroy(Path_2D_struct * Path);
+void Path_2D_Destroy(Path_2D_struct * Path);
 
 #endif

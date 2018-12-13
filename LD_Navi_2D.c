@@ -64,7 +64,7 @@ void __NavNode_2D_Nodes_Connect_(struct _NavNode_2D_*Dst, struct _NavNode_2D_*Sr
 		    realloc(Dst->Connections_Array,
 		    sizeof(struct _NavNode_2D_Con_)*Dst->Connections_Count);
 		}
-
+//		printf("Cons (%lx): %d\n",Dst,Dst->Connections_Count);
 		struct _NavNode_2D_Con_ * Cur =
 		&Dst->Connections_Array[Dst->Connections_Count-1];
 		
@@ -146,15 +146,17 @@ typedef struct __Node_References_2D__
 
 }__Node_References_2D__;
 
-static __Node_References_2D__ * Node_Ref_Create(_NavNode_2D_ * Node, __Node_References_2D__*Parent,float Score)
+ static __Node_References_2D__ * Node_Ref_Create(_NavNode_2D_ * Node, __Node_References_2D__*Parent,float Score)
 {
     __Node_References_2D__ * RET = (__Node_References_2D__*) 
     malloc(sizeof(__Node_References_2D__));
     if(RET==NULL){return NULL;}
 
     RET->Node = Node; RET->Parent=Parent;
-
-    int NumberOfConnections = RET->Node->Connections_Count -1; //To ignore the parent node
+    _NavNode_2D_ * cmp = NULL;
+    if(Parent != NULL){cmp = Parent->Node;}
+ 
+    int NumberOfConnections = RET->Node->Connections_Count; 
     if(NumberOfConnections > 0)
     {
 	_NavNode_2D_** Init = (_NavNode_2D_**) 
@@ -168,11 +170,14 @@ static __Node_References_2D__ * Node_Ref_Create(_NavNode_2D_ * Node, __Node_Refe
 	
 	for(;Init<End;Init++,CON++)
 	{
+	    *Init=NULL;
 	    _NavNode_2D_ * Curr = CON->Node;
-	    if(Curr != Node)
+
+	    if(Curr != cmp)
 	    {
 		*Init = Curr;
-	    } 
+	    }
+
 	}
     }
     
@@ -187,18 +192,20 @@ int Branches_Count,float * Point,float*Score_Return)
 
     _NavNode_2D_** End = Branches_Array+Branches_Count;
     _NavNode_2D_** Minus=NULL;
-    float MinScore = 0x7FFFFFFF; //+Infinite
+    float MinScore = *Score_Return;
 
     for(;Branches_Array<End;Branches_Array++)
     {
 	if(*Branches_Array!=NULL)
 	{
 	    float tmpDist = V2Distance(Point,&(*Branches_Array)->x);
-	    if(tmpDist<MinScore){
+	    //printf("	(%x) %f\n",*Branches_Array,tmpDist);
+	     if(tmpDist<MinScore){
 		MinScore = tmpDist;Minus =Branches_Array;
 	    }
 	}
     }
+
 
     if(Minus!=NULL){*Score_Return = MinScore;}
     return Minus;
@@ -235,6 +242,7 @@ static void __Path_2D_add_reverse_(Path_2D_struct * Path, _NavNode_2D_ * Node)
     {
 	Path->Last =  (_NavNode_2D_LL*) malloc(sizeof(_NavNode_2D_LL));
 	Path->First = Path->Last;
+	Path->First->Next=NULL;
     }    
     else
     {
@@ -249,10 +257,14 @@ static void __Path_2D_add_reverse_(Path_2D_struct * Path, _NavNode_2D_ * Node)
 
 Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Destiny, float Object_Radius)
 {
+    
     Path_2D_struct * RET = __Path_2D_Construct();
     float DestinyPos[2]; memcpy(DestinyPos,&Destiny->x,8);
     float Score = V2Distance(&Origin->x,DestinyPos);
+    //printf("From (%f,%f) to (%f,%f). Dist = %f\n",Origin->x,Origin->y,DestinyPos[0],DestinyPos[1],Score);
+    Score = 0x7FFFFFFF;
     __Node_References_2D__ * Node = Node_Ref_Create(Origin,NULL,Score);
+  //  printf("Root Created(%lx), Branches = %d\n",Origin,Node->Branches_Count);
     char Unsolved=1;
     while(Unsolved)
     {
@@ -268,21 +280,27 @@ Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Dest
 	    }
 	    break;
 	}
-
 	_NavNode_2D_ ** ptrptr = Node_Ref_Branches_Get_Nearest
 	(Node->Branches_Array,Node->Branches_Count,DestinyPos,&Score);
 
+	//printf("(%lx) Branch: %lx, Score = %f\n",Node->Node,*ptrptr,Score); 
+
+
+
 	if(ptrptr==NULL) //No hay más ramas
 	{
+	  //  printf("No more branches, going up\n");
 	    Node = Node_Ref_Return(Node);
 	    continue;
 	}
 	
 	__Node_References_2D__ * NewNode = Node_Ref_Create(*ptrptr,Node,Score);
+	//printf("Node Created(%lx),Parent=%lx, Branches = %d\n",*ptrptr,NewNode->Parent->Node,NewNode->Branches_Count);
 	Node->Branches_Count-=1;
 	*ptrptr=NULL;
 	
 	Node = NewNode;	
+	//getchar();
     }
 
 
@@ -309,7 +327,7 @@ void Navi_Map_2D_Clear(Navi_Map_2D_struct * Navi_Map)
     }
 }
 
-void Path_2D_destroy(Path_2D_struct * Path)
+void Path_2D_Destroy(Path_2D_struct * Path)
 {
     _NavNode_2D_LL * Explorer = Path->First;
     while(Explorer != NULL)
