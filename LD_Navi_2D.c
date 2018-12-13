@@ -136,6 +136,159 @@ Navi_Map_2D_struct * Navi_Map)
     return 1;
 }
 
+typedef struct __Node_References_2D__
+{
+    float Score;
+    _NavNode_2D_ * Node;
+    struct __Node_References_2D__ *  Parent;
+    int Branches_Count;
+    struct _NavNode_2D_ ** Branches_Array;
+
+}__Node_References_2D__;
+
+static __Node_References_2D__ * Node_Ref_Create(_NavNode_2D_ * Node, __Node_References_2D__*Parent,float Score)
+{
+    __Node_References_2D__ * RET = (__Node_References_2D__*) 
+    malloc(sizeof(__Node_References_2D__));
+    if(RET==NULL){return NULL;}
+
+    RET->Node = Node; RET->Parent=Parent;
+
+    int NumberOfConnections = RET->Node->Connections_Count -1; //To ignore the parent node
+    if(NumberOfConnections > 0)
+    {
+	_NavNode_2D_** Init = (_NavNode_2D_**) 
+	malloc(sizeof(_NavNode_2D_*)*NumberOfConnections);
+	if(Init ==NULL){return NULL;}
+	RET->Score = Score;
+	RET->Branches_Array = Init;
+	
+	struct _NavNode_2D_** End=Init+NumberOfConnections;
+	struct _NavNode_2D_Con_ * CON=Node->Connections_Array;
+	
+	for(;Init<End;Init++,CON++)
+	{
+	    _NavNode_2D_ * Curr = CON->Node;
+	    if(Curr != Node)
+	    {
+		*Init = Curr;
+	    } 
+	}
+    }
+    
+    RET->Branches_Count = NumberOfConnections;
+    return RET;
+}
+
+static _NavNode_2D_ ** Node_Ref_Branches_Get_Nearest(_NavNode_2D_**Branches_Array,
+int Branches_Count,float * Point,float*Score_Return)
+{
+    if(Branches_Count <=0){return NULL;}
+
+    _NavNode_2D_** End = Branches_Array+Branches_Count;
+    _NavNode_2D_** Minus=NULL;
+    float MinScore = 0x7FFFFFFF; //+Infinite
+
+    for(;Branches_Array<End;Branches_Array++)
+    {
+	if(*Branches_Array!=NULL)
+	{
+	    float tmpDist = V2Distance(Point,&(*Branches_Array)->x);
+	    if(tmpDist<MinScore){
+		MinScore = tmpDist;Minus =Branches_Array;
+	    }
+	}
+    }
+
+    if(Minus!=NULL){*Score_Return = MinScore;}
+    return Minus;
+}
+
+//Go to nearest node with non null branches
+static __Node_References_2D__ * Node_Ref_Return(__Node_References_2D__ * Node)
+{
+    __Node_References_2D__ * RET = Node;
+
+    while(RET->Branches_Count>0)
+    {
+	RET=Node->Parent;
+	if(RET==NULL){RET=Node;break;}
+	free(Node->Branches_Array);
+	free(Node); 
+	Node = RET;
+    }    
+
+    return RET;
+}
+
+
+static Path_2D_struct *  __Path_2D_Construct()
+{
+    Path_2D_struct * tmp = (Path_2D_struct*) malloc(sizeof(Path_2D_struct));
+    tmp->First = NULL; tmp->Last=NULL;
+}
+
+//Add elements but starting from the last element to the first, in reverse
+static void __Path_2D_add_reverse_(Path_2D_struct * Path, _NavNode_2D_ * Node)
+{
+    if(Path->First ==NULL)
+    {
+	Path->Last =  (_NavNode_2D_LL*) malloc(sizeof(_NavNode_2D_LL));
+	Path->First = Path->Last;
+    }    
+    else
+    {
+	Path->First->Last = (_NavNode_2D_LL*) malloc(sizeof(_NavNode_2D_LL));
+	Path->First->Last->Next =Path->First; 
+	Path->First = Path->First->Last;
+    }
+
+    Path->First->Last=NULL;
+    Path->First->Node = Node;
+}
+
+Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Destiny, float Object_Radius)
+{
+    Path_2D_struct * RET = __Path_2D_Construct();
+    float DestinyPos[2]; memcpy(DestinyPos,&Destiny->x,8);
+    float Score = V2Distance(&Origin->x,DestinyPos);
+    __Node_References_2D__ * Node = Node_Ref_Create(Origin,NULL,Score);
+    char Unsolved=1;
+    while(Unsolved)
+    {
+	if(Destiny == Node->Node)
+	{
+	    while(Node != NULL)
+	    {
+		__Path_2D_add_reverse_(RET,Node->Node);
+		free(Node->Branches_Array);
+		__Node_References_2D__ * tmp=Node;
+		Node=Node->Parent;
+		free(tmp);
+	    }
+	    break;
+	}
+
+	_NavNode_2D_ ** ptrptr = Node_Ref_Branches_Get_Nearest
+	(Node->Branches_Array,Node->Branches_Count,DestinyPos,&Score);
+
+	if(ptrptr==NULL) //No hay más ramas
+	{
+	    Node = Node_Ref_Return(Node);
+	    continue;
+	}
+	
+	__Node_References_2D__ * NewNode = Node_Ref_Create(*ptrptr,Node,Score);
+	Node->Branches_Count-=1;
+	*ptrptr=NULL;
+	
+	Node = NewNode;	
+    }
+
+
+    return RET;
+}
+
 void Navi_Map_2D_Clear(Navi_Map_2D_struct * Navi_Map)
 {
     if(Navi_Map->Node_Count > 0)
@@ -154,4 +307,17 @@ void Navi_Map_2D_Clear(Navi_Map_2D_struct * Navi_Map)
 	Navi_Map->Node_Array=NULL;
 	Navi_Map->Node_Count=0;
     }
+}
+
+void Path_2D_destroy(Path_2D_struct * Path)
+{
+    _NavNode_2D_LL * Explorer = Path->First;
+    while(Explorer != NULL)
+    {
+	_NavNode_2D_LL * tmp = Explorer;
+	Explorer=Explorer->Next;
+	free(tmp); 
+    }
+    
+    free(Path);
 }
