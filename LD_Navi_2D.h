@@ -66,8 +66,24 @@ struct Navi_Map_2D_struct
 
 };
 
+typedef struct _NavNode_2D_ _NavNode_2D_;
 typedef struct Navi_Map_2D_struct Navi_Map_2D_struct;
 typedef struct _NavNode_2D_ _NavNode_2D_;
+
+
+struct Path_2D_struct
+{
+    struct _NavNode_2D_LL
+    {
+	struct _NavNode_2D_ * Node;
+	struct _NavNode_2D_LL * Next;
+	struct _NavNode_2D_LL * Last;
+    } * First;
+    struct _NavNode_2D_LL * Last;
+};
+
+typedef struct Path_2D_struct Path_2D_struct;
+typedef struct _NavNode_2D_LL _NavNode_2D_LL;
 
 /************
  * DECL
@@ -92,9 +108,9 @@ void Edges_Map_2D_Clear(Edges_Map_2D_struct * Edges_Map);
  * *****************************************/
 int Navi_Map_2D_Generate(float * Triangle_2D_RAW_Compatible_Buffer, int Triangles_in_Buffer,
 Navi_Map_2D_struct * Navi_Map);
-
 void Navi_Map_2D_clear(Navi_Map_2D_struct * Navi_Map);
 
-char Navi_Map_2D_FindPath(Navi_Map_2D_struct * Navi_Map,_NavNode_2D_  * Origin,_NavNode_2D_ * Destiny);
+Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Destiny, float Object_Radius);
+void Path_2D_destroy(Path_2D_struct * Path);
 
 #endif
