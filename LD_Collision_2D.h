@@ -63,7 +63,7 @@ typedef struct Collision_2D_Struct
 
 /****************************************
  * DECL
-/****************************************/
+ ****************************************/
 
 void Swept_AABB_2D_Create(Swept_AABB_2D_Struct * Swept_AABB_2D, 
 float Center_Position_X, float Center_Position_Y,

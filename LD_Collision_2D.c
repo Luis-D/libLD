@@ -1,9 +1,9 @@
 #include "LD_Collision_2D.h"
-
+#include <stdio.h>
 
 /****************************************
  * DEFS
-/****************************************/
+ ****************************************/
 
 void Swept_AABB_2D_Create(Swept_AABB_2D_Struct * Swept_AABB_2D, 
 float Center_Position_X, float Center_Position_Y,
@@ -20,6 +20,10 @@ int Swept_AABB_vs_Line_Segment_2D_Check
 {
     Swept_AABB_2D_Struct* Swept_AABB = (Swept_AABB_2D_Struct*) _Swept_AABB_;
 
+    //printf("\nCol= (%f,%f),(%f,%f) ",Line_Segment->Point_A[0],Line_Segment->Point_A[1],Line_Segment->Point_B[0],Line_Segment->Point_B[1]);
+
+    //printf("vs (%f,%f),(%f,%f)\nHS: (%f,%f) | ",Swept_AABB->Center_Position[0],Swept_AABB->Center_Position[1],Swept_AABB->Center_Position[0]+Swept_AABB->Direction[0],Swept_AABB->Center_Position[1]+Swept_AABB->Direction[1],Swept_AABB->Half_Extent[0],Swept_AABB->Half_Extent[1]);
+    
     float Line_Segment_tmp[4];
     memcpy(Line_Segment_tmp,Line_Segment,16);
     float SeparatingAxis [2];
@@ -27,11 +31,13 @@ int Swept_AABB_vs_Line_Segment_2D_Check
     V2V2SUB(&Line_Segment_tmp[2],&Line_Segment_tmp[0],LineDir);
     V2CalculatePerpendicular(LineDir,SeparatingAxis,ClockWise_Multiplier);
     NormalizeVec2(SeparatingAxis,SeparatingAxis);
+    //printf("LD: (%f,%f) | LP: (%f,%f)\n",LineDir[0],LineDir[1],SeparatingAxis[0],SeparatingAxis[1]);
     
-    float SeparatingAxisDotDir = V2V2Dot(SeparatingAxis,Swept_AABB->Direction);
+    float* NormDir = Swept_AABB->Direction;
+    float SeparatingAxisDotDir = V2V2Dot(SeparatingAxis,NormDir);
     
+    //printf("SADD= (%f,%f).(%f,%f)=%f\n",SeparatingAxis[0],SeparatingAxis[1],NormDir[0],NormDir[1],SeparatingAxisDotDir);
     if(SeparatingAxisDotDir >= 0){return 0;}
-
     float d = V2V2Dot(SeparatingAxis,&Line_Segment_tmp[0]);
     float SeparatingAxisdotC = V2V2Dot(SeparatingAxis,Swept_AABB->Center_Position);
 
@@ -42,6 +48,8 @@ int Swept_AABB_vs_Line_Segment_2D_Check
     float * Returned_Time = &Return_Collision->Time;
 
     *Returned_Time = (r + d - SeparatingAxisdotC) / (SeparatingAxisDotDir);
+    
+    //printf("Time = %f\n",*Returned_Time);
 
     if(*Returned_Time >= 0 && *Returned_Time <= 1.f)
     {
@@ -67,8 +75,9 @@ int Swept_AABB_vs_Line_Segment_2D_Check
         float ftemp2= V2V2Dot(LineDir,tmp);
         float dot1 = V2V2Dot(SeparatingAxis,Q);
 
+//	printf("@ (%f,%f) ,0<=%f & %f<=%f\n",Q[0],Q[1],ftemp2,ftemp2,ftemp);
 
-        if(dot1 == d && ftemp2>=0 && ftemp2<=ftemp)
+        if(0<=ftemp2 && ftemp2<=ftemp)
         {
             memcpy(Return_Collision->Point,Q,8);
             return 1;   

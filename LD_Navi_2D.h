@@ -80,6 +80,8 @@ struct Path_2D_struct
 	struct _NavNode_2D_LL * Last;
     } * First;
     struct _NavNode_2D_LL * Last;
+    float Origin[2]; //<- These are optional, just if needed. Never took in account for computing. 
+    float Destiny[2];//<- These are optional too.
 };
 
 typedef struct Path_2D_struct Path_2D_struct;
@@ -110,6 +112,7 @@ int Navi_Map_2D_Generate(float * Triangle_2D_RAW_Compatible_Buffer, int Triangle
 Navi_Map_2D_struct * Navi_Map);
 void Navi_Map_2D_clear(Navi_Map_2D_struct * Navi_Map);
 
+//Object_Radius no implemented yet, it shall be used to discard narrow paths
 Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Destiny, float Object_Radius);
 void Path_2D_Destroy(Path_2D_struct * Path);
 

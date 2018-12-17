@@ -34,8 +34,9 @@ float ClockWise_Multiplier) //-1.f
        
         if(Collision.Time==2.f){return 0;}
 
-   
-        Response_Algorithm(Swept_Object,&Collision);
+	if(Response_Algorithm != NULL)
+        {Response_Algorithm(Swept_Object,&Collision);}
+	else{break;}
     }
 
     return 1;
@@ -89,9 +90,9 @@ Navi_Map_2D_struct * Navi_Map)
 	Triangle_2D_Barycenter(Triangle_2D_RAW_Compatible_Buffer,(float*)&Nodes->x);
 	Nodes->Connections_Count = 0;
 
-
+/*
 	printf("(%lx)|(%f,%f),(%f,%f),(%f,%f) = ",Nodes,Triangle_2D_RAW_Compatible_Buffer[0],Triangle_2D_RAW_Compatible_Buffer[1],Triangle_2D_RAW_Compatible_Buffer[2],Triangle_2D_RAW_Compatible_Buffer[3],Triangle_2D_RAW_Compatible_Buffer[4],Triangle_2D_RAW_Compatible_Buffer[5]);	printf("%f,%f\n",Nodes->x,Nodes->y);
-
+*/
 
 	//Check for connections with other nodes, checking other triangles
 	struct _NavNode_2D_ * Ex = Nodes-1;
@@ -124,7 +125,7 @@ Navi_Map_2D_struct * Navi_Map)
 
 	    if (Equals>1)
 	    {
-		printf("Connection added: %lx <-> %lx\n",Nodes,Ex);
+	//	printf("Connection added: %lx <-> %lx\n",Nodes,Ex);
 		__NavNode_2D_Nodes_Connect_(Nodes,Ex,Vertex_ptr);
 		__NavNode_2D_Nodes_Connect_(Ex,Nodes,Vertex_ptr);
 	    }
@@ -181,14 +182,16 @@ typedef struct __Node_References_2D__
 	}
     }
     
+   // if(Parent!=NULL){NumberOfConnections--;}
+     
     RET->Branches_Count = NumberOfConnections;
     return RET;
 }
 
 static _NavNode_2D_ ** Node_Ref_Branches_Get_Nearest(_NavNode_2D_**Branches_Array,
-int Branches_Count,float * Point,float*Score_Return)
+int Branches_Count,float * Point,float*Score_Return,void * Parent)
 {
-    if(Branches_Count <=0){return NULL;}
+    if(Branches_Count <=1 && Parent != NULL){return NULL;}
 
     _NavNode_2D_** End = Branches_Array+Branches_Count;
     _NavNode_2D_** Minus=NULL;
@@ -199,8 +202,8 @@ int Branches_Count,float * Point,float*Score_Return)
 	if(*Branches_Array!=NULL)
 	{
 	    float tmpDist = V2Distance(Point,&(*Branches_Array)->x);
-	    //printf("	(%x) %f\n",*Branches_Array,tmpDist);
-	     if(tmpDist<MinScore){
+//	    printf("	(%x) %f\n",*Branches_Array,tmpDist);
+	    if(tmpDist<MinScore){
 		MinScore = tmpDist;Minus =Branches_Array;
 	    }
 	}
@@ -216,7 +219,7 @@ static __Node_References_2D__ * Node_Ref_Return(__Node_References_2D__ * Node)
 {
     __Node_References_2D__ * RET = Node;
 
-    while(RET->Branches_Count>0)
+    while(RET->Branches_Count==1)
     {
 	RET=Node->Parent;
 	if(RET==NULL){RET=Node;break;}
@@ -243,12 +246,14 @@ static void __Path_2D_add_reverse_(Path_2D_struct * Path, _NavNode_2D_ * Node)
 	Path->Last =  (_NavNode_2D_LL*) malloc(sizeof(_NavNode_2D_LL));
 	Path->First = Path->Last;
 	Path->First->Next=NULL;
+	memcpy(Path->Destiny,&Node->x,4*__ELEMENTSCOUNT);
     }    
     else
     {
 	Path->First->Last = (_NavNode_2D_LL*) malloc(sizeof(_NavNode_2D_LL));
 	Path->First->Last->Next =Path->First; 
 	Path->First = Path->First->Last;
+	memcpy(Path->Origin,&Node->x,4*__ELEMENTSCOUNT);
     }
 
     Path->First->Last=NULL;
@@ -268,8 +273,11 @@ Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Dest
     char Unsolved=1;
     while(Unsolved)
     {
+//	getchar();
+//	printf("In Node %lx, Branches = %d, ",Node->Node,Node->Branches_Count);printf("Destiny = %lx\n",Destiny);	
 	if(Destiny == Node->Node)
 	{
+	    //printf("Arrived to destiny\n");
 	    while(Node != NULL)
 	    {
 		__Path_2D_add_reverse_(RET,Node->Node);
@@ -281,26 +289,29 @@ Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Dest
 	    break;
 	}
 	_NavNode_2D_ ** ptrptr = Node_Ref_Branches_Get_Nearest
-	(Node->Branches_Array,Node->Branches_Count,DestinyPos,&Score);
-
-	//printf("(%lx) Branch: %lx, Score = %f\n",Node->Node,*ptrptr,Score); 
+	(Node->Branches_Array,Node->Branches_Count,DestinyPos,&Score,Node->Parent);
 
 
 
 	if(ptrptr==NULL) //No hay más ramas
 	{
-	  //  printf("No more branches, going up\n");
+	    //printf("(%lx) ",Node->Node);
 	    Node = Node_Ref_Return(Node);
-	    continue;
+	    Score = V2Distance(&Node->Node->x,DestinyPos);
+//	    printf("No more branches, going up to %lx, Score = %f\n",Node->Node,Score);
+//	    getchar(); 
+	     continue;
 	}
+//	else{printf("(%lx) Branch: %lx, Score = %f\n",Node->Node,*ptrptr,Score);}
 	
 	__Node_References_2D__ * NewNode = Node_Ref_Create(*ptrptr,Node,Score);
-	//printf("Node Created(%lx),Parent=%lx, Branches = %d\n",*ptrptr,NewNode->Parent->Node,NewNode->Branches_Count);
-	Node->Branches_Count-=1;
+//	printf("Node Created(%lx),Parent=%lx, Branches = %d\n",*ptrptr,NewNode->Parent->Node,NewNode->Branches_Count);
+//	Node->Branches_Count-=1;
 	*ptrptr=NULL;
-	
 	Node = NewNode;	
-	//getchar();
+
+	//printf("End of loop cicle\n");
+
     }
 
 
@@ -329,13 +340,15 @@ void Navi_Map_2D_Clear(Navi_Map_2D_struct * Navi_Map)
 
 void Path_2D_Destroy(Path_2D_struct * Path)
 {
-    _NavNode_2D_LL * Explorer = Path->First;
-    while(Explorer != NULL)
+    if(Path != NULL)
     {
-	_NavNode_2D_LL * tmp = Explorer;
-	Explorer=Explorer->Next;
-	free(tmp); 
+	_NavNode_2D_LL * Explorer = Path->First;
+	while(Explorer != NULL)
+	{
+	    _NavNode_2D_LL * tmp = Explorer;
+	    Explorer=Explorer->Next;
+	    free(tmp); 
+	}
+	free(Path);
     }
-    
-    free(Path);
 }
