@@ -137,9 +137,335 @@ Navi_Map_2D_struct * Navi_Map)
     return 1;
 }
 
+void Navi_Map_2D_Clear(Navi_Map_2D_struct * Navi_Map)
+{
+    if(Navi_Map->Node_Count > 0)
+    {
+	struct _NavNode_2D_*Nodes = Navi_Map->Node_Array;
+	struct _NavNode_2D_*Node_End = Nodes + Navi_Map->Node_Count;
+
+	for(;Nodes<Node_End;Nodes++)
+	{
+	    if(Nodes->Connections_Count>0)
+	    {
+		free(Nodes->Connections_Array);
+	    }
+	}
+	free(Nodes);
+	Navi_Map->Node_Array=NULL;
+	Navi_Map->Node_Count=0;
+    }
+}
+
+typedef struct __Node_List_2D__
+{
+    struct __NLL_2D__
+    {
+	float G,H,F;
+	struct __NLL_2D__ * Parent;
+	_NavNode_2D_*Node;
+
+	int Branches_Count;
+	struct _NavNode_2D_ ** Branches_Array;
+
+	struct 	__NLL_2D__ * Next;
+	struct  __NLL_2D__ * Last;
+    }*First;
+    struct __NLL_2D__ * Last;
+}__Node_List_2D___;
+typedef struct __NLL_2D__       __NLL_2D__;
+typedef struct __Node_List_2D__ __Node_List_2D__;
+
+static __Node_List_2D__ * Node_List_Init()
+{
+    __Node_List_2D__ * ret = (__Node_List_2D__*) malloc(sizeof(__Node_List_2D__));
+    ret->First=NULL;
+    ret->Last=NULL;
+    return ret;
+}
+
+static __NLL_2D__ * Node_List_add(__Node_List_2D__*List, _NavNode_2D_*Node,__NLL_2D__*Parent,float G,float H)
+{
+    float F = G+H;
+    __NLL_2D__*tmp=List->Last;
+    if(List->First == NULL)
+    {
+	List->First = (__NLL_2D__*)malloc(sizeof(__NLL_2D__));
+	List->Last = List->First;
+	tmp=List->Last;
+	tmp->Next=NULL;
+	tmp->Last=NULL;
+//printf("\t\tAdded to Head\n");
+    }
+    else
+    {
+	__NLL_2D__*New = (__NLL_2D__*)malloc(sizeof(__NLL_2D__));
+	
+	char Greater = (F > tmp->F);
+	//printf("%f > %f ?\n",F,tmp->F);
+	
+	if(Greater){
+//printf("\t\tAdded to tail\n");
+	    List->Last->Next = New;
+	    New->Last=List->Last;
+	    New->Next=NULL;
+	    List->Last = New;
+//printf("\t\t\tLast: %x\n",New->Last->Node);
+	}else{
+	    //getchar();
+	   // printf("\tNo \n");printf("\t%lx <-- %lx\n",tmp->Node,tmp->Parent->Node);
+	    while((tmp!=NULL) && (F <= tmp->F))
+	    {tmp=tmp->Last;}
+
+	    //printf("\t(%x)\n",tmp);
+
+	    if(tmp==NULL)
+	    {
+//printf("\t\tAdded to Head (%f)\n",F);
+		List->First->Last=New;
+		New->Next=List->First;
+		New->Last=NULL;
+		List->First=New;
+//printf("\t\t\tNext: %x\n",New->Next->Node);
+	    }
+	    else
+	    {
+//printf("\t\tAdded to Body (%f)\n",F);
+//printf("\t\t\t| Last: %x\n",tmp->Node);
+	    //getchar();
+		New->Last=tmp;
+		New->Next=tmp->Next;
+		tmp->Next->Last=New;
+		tmp->Next=New;
+	    }
+	}
+
+	tmp = New;
+    }
+
+
+    {
+	_NavNode_2D_ * cmp = NULL;
+	if(Parent != NULL){cmp = Parent->Node;}
+	
+    __NLL_2D__* RET = tmp;
+     int NumberOfConnections = Node->Connections_Count; 
+     if(NumberOfConnections > 0)
+     {
+        _NavNode_2D_** Init = (_NavNode_2D_**) 
+        malloc(sizeof(_NavNode_2D_*)*NumberOfConnections);
+        if(Init ==NULL){return NULL;}
+        RET->G = G;
+        RET->H = H;
+        RET->F=F;
+        RET->Branches_Array = Init;
+        
+        struct _NavNode_2D_** End=Init+NumberOfConnections;
+        struct _NavNode_2D_Con_ * CON=Node->Connections_Array;
+        
+         for(;Init<End;Init++,CON++)
+        {
+            *Init=NULL;
+            _NavNode_2D_ * Curr = CON->Node;
+
+            if(Curr != cmp)
+            {
+                *Init = Curr;
+            }
+
+        }
+    }
+
+    RET->Branches_Count = NumberOfConnections;
+	tmp->Parent = Parent;
+	tmp->F=F;tmp->G=G;tmp->H=H;
+	tmp->Node=Node;
+	//printf("NODE: %lx, ",tmp->Node);
+	//if(Parent!=NULL)printf("PARENT: %lx",Parent->Node);
+	//printf("\n");
+    }
+    return tmp;
+}
+
+static void * Node_List_Append(__Node_List_2D__*List,__NLL_2D__*Node)
+{
+    if(List->Last==NULL )
+    {
+	List->Last = Node;
+	List->First = Node;
+    }
+    else
+    {
+ 
+	List->Last->Next=Node;
+	Node->Next=NULL;
+    }	
+    Node->Last = List->Last;
+}
+
+static void * Node_List_remove_NoFree(__Node_List_2D__*List,__NLL_2D__*Node)
+{
+   __NLL_2D__*N = Node->Next;
+   __NLL_2D__*L = Node->Last;
+    if(N!=NULL){N->Last = L;}
+    else{List->Last = L;}
+    if(L!=NULL){L->Next = N;}
+    else{List->First=N;}
+}
+
+static __NLL_2D__* Node_List_Search(__Node_List_2D__*List, _NavNode_2D_*Node)
+{
+    __NLL_2D__ * Last = List->Last;
+    while(Last!=NULL)
+    {
+	if(Last->Node == Node)
+	{
+	     return Last;
+	}
+	Last=Last->Next;
+    }    
+    return NULL;
+}
+
+static __NLL_2D__* Node_List_Search_LowF(__Node_List_2D__*List)
+{
+    __NLL_2D__* Explorer = List->First;
+//    printf("In List: \n");
+    while(Explorer!=NULL)
+    {
+//	printf("\t%lx",Explorer->Node);
+//	printf(" (%f)\n",Explorer->F);
+	Explorer=Explorer->Next;
+    }
+    
+   return List->First; 
+}
+
+static void Node_List_Destroy(__Node_List_2D__ * List)
+{
+    __NLL_2D__*Last = List->Last;
+    __NLL_2D__*tmp;
+    while(Last!=NULL)
+    {	
+	tmp = Last;
+	free(Last->Branches_Array);
+	free(Last);
+	Last=tmp->Next;
+    }
+    free(List);
+}
+
+
+
+static Path_2D_struct *  __Path_2D_Construct()
+{
+    Path_2D_struct * tmp = (Path_2D_struct*) malloc(sizeof(Path_2D_struct));
+    tmp->First = NULL; tmp->Last=NULL;
+}
+
+//Add elements but starting from the last element to the first, in reverse
+static void __Path_2D_add_reverse_(Path_2D_struct * Path, _NavNode_2D_ * Node)
+{
+    if(Path->First ==NULL)
+    {
+	Path->Last =  (_NavNode_2D_LL*) malloc(sizeof(_NavNode_2D_LL));
+	Path->First = Path->Last;
+	Path->First->Next=NULL;
+	memcpy(Path->Destiny,&Node->x,4*__ELEMENTSCOUNT);
+    }    
+    else
+    {
+	Path->First->Last = (_NavNode_2D_LL*) malloc(sizeof(_NavNode_2D_LL));
+	Path->First->Last->Next =Path->First; 
+	Path->First = Path->First->Last;
+	memcpy(Path->Origin,&Node->x,4*__ELEMENTSCOUNT);
+    }
+
+    Path->First->Last=NULL;
+    Path->First->Node = Node;
+}
+
+Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Destiny, float Object_Radius)
+{
+    Path_2D_struct * RET = __Path_2D_Construct();
+    float DestinyPos[2]; memcpy(DestinyPos,&Destiny->x,8);
+    float OriginPos[2]; memcpy(OriginPos,&Origin->x,8);
+    float H = V2Distance(&Origin->x,DestinyPos);
+    float G=0;
+
+    __Node_List_2D__ * OpenList = Node_List_Init();
+    __Node_List_2D___ * ClosedList = Node_List_Init();
+    Node_List_add(OpenList,Origin,NULL,0,0);
+    
+    while(1)
+    {
+	__NLL_2D__ * Curr = Node_List_Search_LowF(OpenList);
+//__NLL_2D__* Ppp=NULL;if(Curr->Parent!=NULL){printf("P: %lx | ",Curr->Parent->Node);};	
+//printf("In %lx, Branches: %d | Destiny: %lx\n",Curr->Node,Curr->Branches_Count,Destiny);
+
+	if(Curr->Node == Destiny)
+	{
+//	    printf("Destiny reached, starting backtrack\n");
+            while(Curr != NULL)
+            {
+//		printf("%lx\n",Curr->Node);
+                __Path_2D_add_reverse_(RET,Curr->Node);
+                Curr=Curr->Parent;
+            }
+//	    printf("Arrived!\n");
+            break;
+	}
+
+	Node_List_remove_NoFree(OpenList,Curr);
+	Node_List_Append(ClosedList,Curr);
+
+	int Branches_Count = Curr->Branches_Count;
+	_NavNode_2D_** Branches = Curr->Branches_Array;
+	_NavNode_2D_** B_END =	Branches+Branches_Count;
+
+	for(;Branches<B_END;Branches++)
+	{
+	    if(*Branches!=NULL)
+	    {
+//		printf("\t Branch: %lx",*Branches);
+		if(Node_List_Search(ClosedList,*Branches)!=NULL)
+		{
+//		    printf("\t\tVisited\n");
+		    continue;
+		}
+		else
+		{
+		    G = Curr->G + V2Distance(&(*Branches)->x,&Curr->Node->x);
+		    H = V2Distance (&(*Branches)->x,&Destiny->x);
+	   
+		    __NLL_2D__*Found =  Node_List_Search(OpenList,*Branches);
+		    if(Found !=NULL)
+		    {
+			if(G>Found->G)
+			{
+			    continue;
+			}
+		    }
+//		    printf("\t\tAdded to OpenList\n");
+		    Node_List_add(OpenList,*Branches,Curr,G,H);
+		}
+	    }
+	}
+//	printf("End of cicle\n");	
+    }
+    
+    Node_List_Destroy(OpenList);
+    Node_List_Destroy(ClosedList);
+    
+    return RET;
+}
+
+
+/*
 typedef struct __Node_References_2D__
 {
-    float Score;
+    char Explored;
+    float G, Heuristic,F;
     _NavNode_2D_ * Node;
     struct __Node_References_2D__ *  Parent;
     int Branches_Count;
@@ -147,8 +473,149 @@ typedef struct __Node_References_2D__
 
 }__Node_References_2D__;
 
- static __Node_References_2D__ * Node_Ref_Create(_NavNode_2D_ * Node, __Node_References_2D__*Parent,float Score)
+typedef struct __Node_List_2D__
 {
+    struct __NLL_2D__
+    {
+	float G,H,F;
+	_NavNode_2D_*Node;
+	struct 	__NLL_2D__ * Next;
+	struct  __NLL_2D__ * Last;
+    }*First;
+    struct __NLL_2D__ * Last;
+}__Node_List_2D___;
+
+typedef struct __NLL_2D__	__NLL_2D__;
+typedef struct __Node_List_2D__ __Node_List_2D__;
+
+static __Node_List_2D__ * Node_List_Init()
+{
+    __Node_List_2D__ * ret = (__Node_List_2D__*) malloc(sizeof(__Node_List_2D__));
+    ret->First=NULL;
+    ret->Last=NULL;
+    return ret;
+}
+
+static __NLL_2D__ * Node_List_add(__Node_List_2D__*List, _NavNode_2D_*Node,float G,float H)
+{
+    float F = G+H;
+    __NLL_2D__*tmp=List->Last;
+    if(List->First == NULL)
+    {
+	List->First = (__NLL_2D__*)malloc(sizeof(__NLL_2D__));
+	List->Last = List->First;
+	tmp=List->Last;
+	tmp->Next=NULL;
+	tmp->Last=NULL;
+    }
+    else
+    {
+	__NLL_2D__*New = (__NLL_2D__*)malloc(sizeof(__NLL_2D__));
+	while(1)
+	{
+	    __NLL_2D__*ltmp;
+	    char Greater = (F > tmp->F);
+	    printf("%f > %f ?\n",F,tmp->F);
+	    if(Greater){
+		ltmp = tmp->Next;
+		if(ltmp==NULL)
+		{
+		    ltmp=New;
+		    ltmp->Next=NULL;
+		    ltmp->Last=tmp;
+		    tmp->Next=ltmp;
+		    tmp=ltmp;
+		    List->Last=tmp;
+		    break;
+		}
+		else
+		{
+		    if(ltmp->F > F)
+		    {
+			tmp->Next=New;
+			ltmp->Last=New;
+			New->Next=ltmp;
+			New->Last=tmp;
+			tmp=New;
+			break;
+		    }
+		}
+	    }else{
+		printf("\tNo");
+		ltmp =tmp->Last;
+		printf("\tltmp = %lx\n",ltmp);
+		if(ltmp==NULL)
+		{
+		    ltmp=New;
+		    ltmp->Last=NULL;
+		    ltmp->Next=tmp;
+		    tmp->Last=ltmp;
+		    tmp=ltmp;
+		    List->First=tmp;
+		    break;
+		}
+		else
+		{
+		    if(ltmp->F <= F)
+		    {
+			tmp->Last=New;
+			ltmp->Next=New;
+			New->Last=ltmp;
+			New->Next=tmp;
+			tmp=New;
+			break;
+		    }
+		}
+		printf("\n");
+	    }
+	    
+	    tmp=ltmp;
+//	    List->Last->Next = (__NLL_2D__*)malloc(sizeof(__NLL_2D__));
+	}
+    }
+    tmp->F=F;tmp->G=G;tmp->H=H;
+    tmp->Node=Node;
+    return tmp;
+}
+
+static __NLL_2D__* Node_List_Search(__Node_List_2D__*List, _NavNode_2D_*Node)
+{
+    __NLL_2D__ * Last = List->Last;
+    while(Last!=NULL)
+    {
+	if(Last->Node == Node)
+	{
+	     return Node;
+	}
+	Last=Last->Next;
+    }    
+    return NULL;
+}
+
+static __NLL_2D__* Node_List_Search_LowF(__Node_List_2D__*List)
+{
+   return List->First; 
+}
+
+static void Node_List_Destroy(__Node_List_2D__ * List)
+{
+    printf("destroying | %lx | %lx\n",List->First,List->Last);
+    __NLL_2D__*Last = List->Last;
+    __NLL_2D__*tmp;
+    while(Last!=NULL)
+    {	
+	tmp = Last;
+	free(Last);
+	Last=tmp->Next;
+    }
+    free(List);
+}
+
+
+
+ static __Node_References_2D__ * Node_Ref_Create(_NavNode_2D_ * Node, __Node_References_2D__*Parent,float G, float Heuristic)
+{
+    float F = G*Heuristic;
     __Node_References_2D__ * RET = (__Node_References_2D__*) 
     malloc(sizeof(__Node_References_2D__));
     if(RET==NULL){return NULL;}
@@ -163,7 +630,9 @@ typedef struct __Node_References_2D__
 	_NavNode_2D_** Init = (_NavNode_2D_**) 
 	malloc(sizeof(_NavNode_2D_*)*NumberOfConnections);
 	if(Init ==NULL){return NULL;}
-	RET->Score = Score;
+	RET->G = G;
+	RET->Heuristic = Heuristic;
+	RET->F=F;
 	RET->Branches_Array = Init;
 	
 	struct _NavNode_2D_** End=Init+NumberOfConnections;
@@ -183,50 +652,73 @@ typedef struct __Node_References_2D__
     }
     
    // if(Parent!=NULL){NumberOfConnections--;}
-     
+    
+    RET->Explored = 0; 
     RET->Branches_Count = NumberOfConnections;
     return RET;
 }
 
-static _NavNode_2D_ ** Node_Ref_Branches_Get_Nearest(_NavNode_2D_**Branches_Array,
-int Branches_Count,float * Point,float*Score_Return,void * Parent)
+static _NavNode_2D_ ** Node_Ref_Branches_Get_Nearest(__Node_References_2D__*Parent,__Node_List_2D__ *OpenList,__Node_List_2D__*ClosedList,float * Origin, float * Destiny,float * G_Return, float *Heuristic_Return)
 {
-    if(Branches_Count <=1 && Parent != NULL){return NULL;}
+    if(Parent->Branches_Count <=1 && Parent->Parent != NULL){return NULL;}
 
-    _NavNode_2D_** End = Branches_Array+Branches_Count;
+    _NavNode_2D_** Branches_Array = Parent->Branches_Array;
+    _NavNode_2D_** End = Branches_Array+Parent->Branches_Count;
     _NavNode_2D_** Minus=NULL;
-    float MinScore = *Score_Return;
+
+    float G = Parent->G;
+    float Heuristic = Parent->Heuristic;
+    float F = G+Heuristic; 
+  
+//    _NavNode_2D_** Aux = Branches_Array;
+
+    float FF; *(int*)&FF =0x7f800000;
 
     for(;Branches_Array<End;Branches_Array++)
     {
 	if(*Branches_Array!=NULL)
 	{
-	    float tmpDist = V2Distance(Point,&(*Branches_Array)->x);
-//	    printf("	(%x) %f\n",*Branches_Array,tmpDist);
-	    if(tmpDist<MinScore){
-		MinScore = tmpDist;Minus =Branches_Array;
+	    float tmpH = V2Distance(Origin,&(*Branches_Array)->x);
+	    float tmpG = V2Distance(Destiny,&(*Branches_Array)->x);
+	    float tmpF = tmpH+tmpG;
+	    printf("	(%x) %f\n",*Branches_Array,tmpF);
+	    if(tmpF<FF){
+		Minus=Branches_Array;FF=tmpF;G=tmpG;Heuristic=tmpH;
 	    }
 	}
     }
 
+    if(Minus!=NULL){
+	if(Node_List_Search(ClosedList,*Minus)!=NULL)
+	{Minus==NULL;}
+	else
+	{
+	    if(Node_List_Search(OpenList,*Minus)!=NULL)
+	    {	
+		 
+	    }
+	    *G_Return = G;*Heuristic_Return=Heuristic;
+	}
+    }
 
-    if(Minus!=NULL){*Score_Return = MinScore;}
     return Minus;
 }
 
 //Go to nearest node with non null branches
-static __Node_References_2D__ * Node_Ref_Return(__Node_References_2D__ * Node)
+static __Node_References_2D__ * Node_Ref_Return(__Node_References_2D__ * Node,__Node_List_2D__*List)
 {
     __Node_References_2D__ * RET = Node;
-
-    while(RET->Branches_Count==1)
+    
+    while(Node_List_Search(List,Node->Node))
     {
 	RET=Node->Parent;
 	if(RET==NULL){RET=Node;break;}
+	printf("\tParent: %lx (%d)\n",RET->Node,RET->Explored);
 	free(Node->Branches_Array);
 	free(Node); 
 	Node = RET;
     }    
+//	getchar();
 
     return RET;
 }
@@ -264,20 +756,65 @@ Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Dest
 {
     
     Path_2D_struct * RET = __Path_2D_Construct();
-    float DestinyPos[2]; memcpy(DestinyPos,&Destiny->x,8);
-    float Score = V2Distance(&Origin->x,DestinyPos);
-    //printf("From (%f,%f) to (%f,%f). Dist = %f\n",Origin->x,Origin->y,DestinyPos[0],DestinyPos[1],Score);
-    Score = 0x7FFFFFFF;
-    __Node_References_2D__ * Node = Node_Ref_Create(Origin,NULL,Score);
-  //  printf("Root Created(%lx), Branches = %d\n",Origin,Node->Branches_Count);
+    float destinypos[2]; memcpy(destinypos,&Destiny->x,8);
+    float OriginPos[2]; memcpy(OriginPos,&Origin->x,8);
+    float Heuristic = V2Distance(&Origin->x,destinypos);
+    float G=0;
+    printf("From (%f,%f) to (%f,%f). Dist = %f\n",Origin->x,Origin->y,destinypos[0],destinypos[1],Heuristic);
+//    Heuristic = *(int*)&Heuristic =0x7f800000;;
+    __Node_References_2D__ * Node = Node_Ref_Create(Origin,NULL,G,Heuristic);
+    __Node_List_2D__ * OpenList = Node_List_Init();
+    __Node_List_2D___ * ClosedList = Node_List_Init();
+    Node_List_add(OpenList,Node->Node,G,Heuristic);
+//    Node_List_add(OpenList,Node->Node);
+//    printf("Root Created(%lx), Branches = %d\n",Origin,Node->Branches_Count);
     char Unsolved=1;
     while(Unsolved)
     {
-//	getchar();
-//	printf("In Node %lx, Branches = %d, ",Node->Node,Node->Branches_Count);printf("Destiny = %lx\n",Destiny);	
+
+	void *Ppp = NULL; if(Node->Parent!=NULL){Ppp=Node->Parent->Node;};printf("In Node %lx, Parent = %lx, Branches = %d, G = %f, H = %f, ",Node->Node,Ppp,Node->Branches_Count,Node->G,Node->Heuristic);printf("Destiny = %lx\n",Destiny);
 	if(Destiny == Node->Node)
+        {
+            printf("Arrived to destiny\n");
+            while(Node != NULL)
+            {
+                __Path_2D_add_reverse_(RET,Node->Node);
+                free(Node->Branches_Array);
+                __Node_References_2D__ * tmp=Node;
+                Node=Node->Parent;
+                free(tmp);
+            }
+	    printf("Arrived!\n");
+            break;
+        }
+
+
+
+	__NLL_2D__ * Lowest = Node_List_Search_LowF(OpenList);
+	Node_List_add(ClosedList,Node->Node,Node->G,Node->Heuristic);
+	
+	_NavNode_2D_ ** ptrptr = Node_Ref_Branches_Get_Nearest
+        (Node,OpenList,ClosedList,OriginPos,destinypos,&Heuristic,&G);
+
+	if(ptrptr==NULL)
 	{
-	    //printf("Arrived to destiny\n");
+	    printf("No more branches\n");
+	    continue;
+	}
+
+	__Node_References_2D__ * NewNode = Node_Ref_Create(*ptrptr,Node,G,Heuristic);
+        Node_List_add(OpenList,NewNode->Node,G,Heuristic);
+//      printf("Node Created(%lx),Parent=%lx, Branches = %d\n",*ptrptr,NewNode->Parent->Node,NewNode->Branche    s_Count);
+//      Node->Branches_Count-=1;
+        *ptrptr=NULL;
+        Node = NewNode; 
+/*
+    
+void *Ppp = NULL; if(Node->Parent!=NULL){Ppp=Node->Parent->Node;};printf("In Node %lx, Parent = %lx, Branches = %d, Score = %f, ",Node->Node,Ppp,Node->Branches_Count,Node->Heuristic);printf("Destiny = %lx\n",Destiny);	
+	if(Destiny == Node->Node)
+
+	{
+	    printf("Arrived to destiny\n");
 	    while(Node != NULL)
 	    {
 		__Path_2D_add_reverse_(RET,Node->Node);
@@ -288,23 +825,29 @@ Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Dest
 	    }
 	    break;
 	}
+	Heuristic = Node->Heuristic;
+	G = Node->G;
 	_NavNode_2D_ ** ptrptr = Node_Ref_Branches_Get_Nearest
-	(Node->Branches_Array,Node->Branches_Count,DestinyPos,&Score,Node->Parent);
-
+	(Node,OpenList,ClosedList,OriginPos,destinypos,&Heuristic,&G);
 
 
 	if(ptrptr==NULL) //No hay más ramas
 	{
+	    printf("No more branches\n");
+	    Node_List_add(ClosedList,Node->Node);
+	    Node->Explored=1;
 	    //printf("(%lx) ",Node->Node);
-	    Node = Node_Ref_Return(Node);
-	    Score = V2Distance(&Node->Node->x,DestinyPos);
-//	    printf("No more branches, going up to %lx, Score = %f\n",Node->Node,Score);
+	    Node = Node_Ref_Return(Node,ClosedList);
+	    Heuristic = V2Distance(&Node->Node->x,destinypos);
+	    G = V2Distance(&Node->Node->x,OriginPos);
+	    printf("Going up to %lx, Score = %f\n",Node->Node,Heuristic);
 //	    getchar(); 
 	     continue;
 	}
 //	else{printf("(%lx) Branch: %lx, Score = %f\n",Node->Node,*ptrptr,Score);}
 	
-	__Node_References_2D__ * NewNode = Node_Ref_Create(*ptrptr,Node,Score);
+	__Node_References_2D__ * NewNode = Node_Ref_Create(*ptrptr,Node,G,Heuristic);
+	Node_List_add(OpenList,NewNode->Node);
 //	printf("Node Created(%lx),Parent=%lx, Branches = %d\n",*ptrptr,NewNode->Parent->Node,NewNode->Branches_Count);
 //	Node->Branches_Count-=1;
 	*ptrptr=NULL;
@@ -313,30 +856,14 @@ Path_2D_struct * Navi_Map_2D_FindPath(_NavNode_2D_ * Origin, _NavNode_2D_ * Dest
 	//printf("End of loop cicle\n");
 
     }
+    
+    Node_List_Destroy(OpenList);
+    Node_List_Destroy(ClosedList);
 
-
+    printf("Returning\n");
     return RET;
 }
-
-void Navi_Map_2D_Clear(Navi_Map_2D_struct * Navi_Map)
-{
-    if(Navi_Map->Node_Count > 0)
-    {
-	struct _NavNode_2D_*Nodes = Navi_Map->Node_Array;
-	struct _NavNode_2D_*Node_End = Nodes + Navi_Map->Node_Count;
-
-	for(;Nodes<Node_End;Nodes++)
-	{
-	    if(Nodes->Connections_Count>0)
-	    {
-		free(Nodes->Connections_Array);
-	    }
-	}
-	free(Nodes);
-	Navi_Map->Node_Array=NULL;
-	Navi_Map->Node_Count=0;
-    }
-}
+*/
 
 void Path_2D_Destroy(Path_2D_struct * Path)
 {
