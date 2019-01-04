@@ -29,7 +29,7 @@ SOFTWARE.
 #ifndef _LD_POLYGON_EXTRACT_3D_H
 #define _LD_POLYGON_EXTRACT_3D_H
 
-#include "LD_Geometry.h"
+#include "Extern/LD_Geometry.h"
 
 typedef struct
 {

@@ -33,6 +33,7 @@ extern "C"
     void V2Degrees_FPU(float * Vec2D, float * Scalar_Result);
     void V2DegreesV2_FPU(float * Point_A, float * Point_B, float * Scalar_Result);
 
+    void M4x4ScalarMUL(void * Matrix, float Scalar, void * Result_Matrix);
     void M4x4MUL(float * A, float *B, float * Result);
     void M4x4V4MUL(float * Matrix, float *Vector, float * Result);
     void M4x4V4_PseudoV3_W1_MUL (float * Matrix, float * Vector, float * VectorResultado);
@@ -50,22 +51,34 @@ extern "C"
 
     float V2V2Dot (float * Vec2_A, float * Vec2_B);
     float V3V3Dot (float * Vec3_A, float * Vec3_B);
+    float V4V4Dot (float * Vec4_A, float * Vec4_B);
     void CrossProductVec3(float *A, float *B, float *C);
 
     void V2ScalarMUL(float * Vec2_A, float Scalar_B, float * Vec2_Result);
+    void V3ScalarMUL(void * Vec3_A, float Scalar_B, void * Vec3_Result);
+    void V4ScalarMUL(void * Vec4_A, float Scalar_B, void * Vec4_Result);
+    void V4ScalarDIV(void * Vec4_A, float Scalar_B, void * Vec4_Result);
 
     void V2V2ADD(float * Vec2_A, float * Vec2_B, float * Vec2_Result);
     void V2V2SUB(float * Vec2_A, float * Vec2_B, float * Vec2_Result);
     void V3V3ADD(float * Vec3_A, float * Vec3_B,float * Vec3_Result);
     void V3V3SUB(float * Vec3_A, float * Vec3_B,float * Vec3_Result);
+    void V3V3MUL(void * Vec3_A, void * Vec3_B, void * Result);
     void V4V4ADD (float * A, float *B, float * Result);
     void V4V4SUB (float * A, float *B, float * Result);
+
+    void V4Lerp(void * vec4_A, void * vec4_B, float factor, void * Result);
+    void V3Lerp(void * vec3_A, void * vec3_B, float factor, void * Result);
+    void V2Lerp(void * vec2_A, void * vec2_B, float factor, void * Result);
+    float ScalarLerp(float A, float B, float factor);
+    double DoubleScalarLerp(double A, double B, double factor);
 
     void V2CalculatePerpendicular
     (float * Vec2_A,float * Vec2_Result,float ClockWise_Multiplier);
 
     void V2Rotate_FPU(float * Vec2_A, float * Angle_Degrees, float * Vec2_Result);
-
+    void QuaternionRotateV3(void * Quaternion, void * Vec3, void * Result);
+    
     void PerspectiveProjectionMatrix4x4
     (float *matrix, float fovyInDegrees, float aspectRatio,float znear, float zfar);
     void OrthogonalProjectionMatrix4x4

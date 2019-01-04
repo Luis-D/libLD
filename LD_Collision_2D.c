@@ -1,5 +1,7 @@
 #include "LD_Collision_2D.h"
+
 #include <stdio.h>
+#include <math.h> // <- needs libm to be linked. -lm
 
 /****************************************
  * DEFS

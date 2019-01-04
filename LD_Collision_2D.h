@@ -29,11 +29,11 @@ This library contains algorithms to handle 2D collision detection and response
 #ifndef _LD_COLLISION_H 
 #define _LD_COLLISION_H
 
-#include "LD_Math.h"
-#include "LD_Geometry.h"
+#include "Extern/LD_Math.h"
+#include "Extern/LD_Geometry.h"
 #include <stdlib.h>
 #include <string.h>
-#include <math.h> // <- needs libm to be linked. -lm
+
 
 
 typedef struct AABB_2D_Struct

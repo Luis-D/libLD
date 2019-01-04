@@ -1,5 +1,3 @@
-
-
 #ifndef _LD_GEOMETRY_H
 #define _LD_GEOMETRY_H
 

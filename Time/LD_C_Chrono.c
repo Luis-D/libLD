@@ -1,3 +1,5 @@
+//C11
+
 /*Visual Studio not implemented yet*/
 
 /*Check Win implementation*/
@@ -21,12 +23,10 @@ static void __static_Delta_time_Start_()
 {
 //    printf("\t %ld / %ld =",CHRONO_STRUCT.DELTA_TIME.tempCounter_A,CHRONO_STRUCT.DELTA_TIME.DBFPSNano);
     double Calc =
-(CHRONO_STRUCT.DELTA_TIME.DBFPSNano/1000000000.0) /
-   (CHRONO_STRUCT.DELTA_TIME.tempCounter_A/ 1000000000.0);
-//    printf(" %f\n",Calc);
-
+        (CHRONO_STRUCT.DELTA_TIME.DBFPSNano/1000000000.0) /
+        (CHRONO_STRUCT.DELTA_TIME.tempCounter_A/ 1000000000.0);
     CHRONO_STRUCT.DELTA_TIME.Delta_Time = 1.0 /(Calc);
-
+//    printf(" %f\n",Calc);
 //    printf("%f\n", (double)CHRONO_STRUCT.DELTA_TIME.tempCounter_A);
 }
 
@@ -36,9 +36,7 @@ static void __static_Delta_time_Start_()
     LARGE_INTEGER __win_time_frequency;        // ticks per second
 
     void LD_Chrono_init()
-    {
-        QueryPerformanceFrequency(&__win_time_frequency);
-    }
+    {QueryPerformanceFrequency(&__win_time_frequency);}
 
     float * Delta_time_init(int Max_FPS)
     {   
@@ -71,7 +69,7 @@ static void __static_Delta_time_Start_()
 
         #ifdef __MINGW32__ //MINGW
             struct timespec time_;
-            memcpy(&time_.tv_nsec,ptr_4,8);
+            memcpy(&time_.tv_nsec,ptr_4,sizeof(long));
             
             if(*ptr_4>=1000000000L)
             {
@@ -92,7 +90,7 @@ static void __static_Delta_time_Start_()
     {
         QueryPerformanceCounter((LARGE_INTEGER*) &timer->start);
     }
-
+//    printf(" %f\n",Calc);
     void Chrono_Frame_End(Chrono_nano_Timer * timer)
     {
         QueryPerformanceCounter((LARGE_INTEGER*) &timer->end);
@@ -139,12 +137,12 @@ static void __static_Delta_time_Start_()
         memcpy(ptr_1,&time_.tv_nsec,sizeof(long));
 
 
-        if( * ptr_6 > *ptr_1){
+        if( * ptr_6 > *ptr_1)
+        {
             *ptr_2 = (1000000000L-* ptr_6)+* ptr_1;
         }
         else
-
-	{
+	    {
             *ptr_2 = *ptr_1 - CHRONO_STRUCT.DELTA_TIME.start;
         }
   
@@ -158,15 +156,9 @@ static void __static_Delta_time_Start_()
             time_.tv_nsec-=time_.tv_sec;
         }
         else{time_.tv_sec=0;}
-	
-	//printf("%ld ",CHRONO_STRUCT.DELTA_TIME.DFPSNano);
-	//printf(" | Slp: %ld | Dur: %ld ",*ptr_4,*ptr_2);
 
-	*ptr_4= (*ptr_2+*ptr_4);
-	//printf(" | Excess: %ld",*ptr_4);
-
-
-        nanosleep(&time_,NULL);
+	    *ptr_4= (*ptr_2+*ptr_4);
+         nanosleep(&time_,NULL);
     }
 
     void Chrono_Frame_Start(Chrono_nano_Timer * timer)

@@ -36,7 +36,7 @@ SOFTWARE.
 
 
 #include "LD_Collision_2D.h"
-#include "LD_Geometry.h"
+
 
 /************
  * Structs

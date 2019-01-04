@@ -1,3 +1,5 @@
+//C11
+
 /***********************************************************************
 MIT License
 
@@ -53,7 +55,7 @@ struct Chrono_Struct
         int DeltaBaseFPS;
         long DBFPSNano;
         long tempCounter_A;
-	long tempCounter_B;
+	    long tempCounter_B;
         long DFPSNano;       
         long start;
         long end;

@@ -4,3 +4,6 @@
 [submodule "826683f5fcbea7c21a7555bc8ea0d6f4"]
 	path = 826683f5fcbea7c21a7555bc8ea0d6f4
 	url = https://gist.github.com/826683f5fcbea7c21a7555bc8ea0d6f4.git
+[submodule "libLDExtra"]
+	path = libLDExtra
+	url = https://github.com/Luis-D/libLDExtra

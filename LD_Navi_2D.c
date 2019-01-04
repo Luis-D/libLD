@@ -1,5 +1,6 @@
 #include "LD_Navi_2D.h"
-#include "LD_Math.h"
+#include "Extern/LD_Geometry.h"
+#include "Extern/LD_Math.h"
 #include <string.h>
 
 #define Testing_Limit 1000 //Not implementent
