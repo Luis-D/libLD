@@ -15,8 +15,9 @@ typedef struct IQM_RAW_Struct
 	unsigned int TrianglesCount;
 	unsigned int Sizeof_Vec3Buffers;
     unsigned int Sizeof_Vec2Buffers;
-    unsigned int IndicesCount;
+    unsigned int Sizeof_Vec4Buffers;
     unsigned int JointsCount;
+    unsigned int IndicesCount;
 
     struct _IQM_Vec3_Struct
     {
@@ -29,6 +30,8 @@ typedef struct IQM_RAW_Struct
     {
         float u,v;
     } * UV;
+
+    struct _IQM_Vec4_Struct {float x,y,z,w;} * Tangets;
 
     unsigned char * BlendingIndices;
     unsigned char * BlendingWeights;

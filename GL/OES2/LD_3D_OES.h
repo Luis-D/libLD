@@ -12,24 +12,45 @@
         if it's not defined, define it here */
     #ifndef __IDENTITY_MATRIX_4X4_FLOAT_
     #define __IDENTITY_MATRIX_4X4_FLOAT_
-    #define __IDENTITY_MATRIX_4X4_FLOAT_LD_DEF_L_OES_H
+    #define __IDENTITY_MATRIX_4X4_FLOAT_LD_3D_OES_H_
         extern float Identity_Matrix_4x4[16];
     #endif  
 
-    //It's similar to IQM_RAW_Struct, but it doesn't have the first two integers
-    //One Model per Instance
+    /** Mathematical operations **/
+    /*By default it uses the libLDCC Extern/LD_Math.h*/
+#include "../../Extern/LD_Math.h"
+#define __M4x4V4_PseudoV3_W1_MUL_ M4x4V4_PseudoV3_W1_MUL
+#define __M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL_ M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL
+#define __QuatInterpolation V4Lerp
+
+void QuaternionUnit_Inverse(void * Quaternion, void * Result) //Needs ASM implementation
+{
+    ((float*)Result)[0] =((float*)Quaternion)[0] *-1.f;
+    ((float*)Result)[1] =((float*)Quaternion)[1] *-1.f;
+    ((float*)Result)[2] =((float*)Quaternion)[2] *-1.f;
+    ((float*)Result)[3] =((float*)Quaternion)[3] ;
+}
+
+void Quaternion_Diff_Unit(void * Q1, void * Q2, void * Result) //Needs ASM implementation
+{
+    QuaternionUnit_Inverse(Q1,Result);
+    QuaternionMUL(Result,Q2,Result);
+}
+
 typedef struct LD_Model_Object_Struct 
 {
-    int VertexCount;
-	int TrianglesCount;
-	int Sizeof_Vec3Buffers;
-    int Sizeof_Vec2Buffers;
-    int IndicesCount;
-    int JointsCount;
+    unsigned int VertexCount;
+	unsigned int TrianglesCount;
+	unsigned int Sizeof_Vec3Buffers;
+    unsigned int Sizeof_Vec2Buffers;
+    unsigned int Sizeof_Vec4Buffers;
+    unsigned int JointsCount;
+    unsigned int IndicesCount;
 
-    struct __Vec3_Struct{float x,y,z;} * Vertices;
-    struct __Vec3_Struct * Normals;
-    struct __UV_Struct{float u,v;} * UV;
+    struct __Vec3_Struct{float x,y,z;}  * Vertices;
+    struct __Vec3_Struct                * Normals;
+    struct __UV_Struct{float u,v;}      * UV;
+    struct __Vec4_Struct{float x,y,z;}  * Tangents;
     unsigned char * BlendingIndices;
     unsigned char * BlendingWeights;
     struct __Joint_Struct
@@ -95,24 +116,38 @@ struct LD_3D_Struct
     unsigned int Animations_Count;
     DoublyLinkedList(LD_Animation_Object_Struct*) * Animations_LL;
 
-    unsigned int Sizeof_InstacesBuffer;
+    unsigned int Sizeof_InstancesBuffer;
     struct LD_Instance_Struct
     {
-        float Matrix[16];
-        LD_Model_Object_Struct * Model_Data_ptr; //<- Its a pointer to its unique model
+        struct LD_Instance_Model{
+            float Matrix[16];   //<- Model Matrix
+             LD_Model_Object_Struct * Data; //<- Its a pointer to its unique model
+        }Model;
 	
-	struct LD_Instance_Anim_Descriptor_Struct{
-	    LD_Animation_Object_Struct * Data; //<- a pointer to the current animation
-	    char FLAG; //<-0: LSB is set for playing, when clear, it means freeze
-			// 1: Looping frames
-			// 2: Reverse
-			// 3: Frames Interpolation
-	    unsigned int CurrentAnimation;
-	    float CurrentFrame;
-	    float Speed;
-	} Animation;
+	    struct LD_Instance_Animation{
+            unsigned int Animations_Array_Size; //<- Multiple animations can be played.
+            struct _LD_Instance_Animation_Descriptor{
+                LD_Animation_Object_Struct * Data; //<- a pointer to the animation data.
+                char FLAG;  //<-0: LSB is set for playing, when clear, it means freeze.
+                // 1: Looping frames
+                // 2: Reverse
+                // 3: Frames Interpolation
+
+                // 8: Don't play if set
+                struct __Joint_Struct * Current_Pose;
+                struct __Joint_Struct * Next_Pose; //<- Useful if Interpolated
+    
+                unsigned int CurrentAnimation;
+                float CurrentFrame;
+                float NextFrame;
+                float Factor;
+                float Speed;
+            } * Animations_Array;
+            //If more than one animation is being played, the data is added.
+
+        }Animation;
 	 
-    } * InstacesBuffer;
+    } * InstancesBuffer;
 
     unsigned int Sizeof_VRAMBuffer;
     struct LD_VRAMBuffer_struct
@@ -132,113 +167,83 @@ struct LD_3D_Struct
         GLuint EBO;
     } * VRAMBuffer;
 
-    struct LD_Light_System_Struct
-    {
-        float Ambient_Color[3];
-
-        struct LD_Directional_Lights_System_Struct
-        {
-            unsigned int Lights_Count;
-            struct LD_Dir_Light_Struct
-            {
-                float Vector [3]; float Intensity;
-                float Color [3];
-            }* LightsBuffer;
-        }Directional_Lights_System;
-
-    } Light_System;
-
 } LD_3D;
 
 typedef struct LD_VRAMBuffer_struct VRAMBufferStructdef;
 typedef struct LD_Instance_Struct   InstanceStructdef;
-typedef struct LD_Dir_Light_Struct  DirLightStructdef;
 
 void LD_3D_init()
 {
-    float Cero [3] = {0,0,0};
+    float Cero [3] = {0,0,0}; //<- Check for a XOR solution.
 
-    LD_3D.Models_Count=0;
-    LD_3D.Animations_Count=0;
-    LD_3D.Sizeof_InstacesBuffer=0;
-    LD_3D.Sizeof_VRAMBuffer=0;
-    memcpy(LD_3D.Light_System.Ambient_Color,Cero,sizeof(float)*3);
-    LD_3D.Light_System.Directional_Lights_System.Lights_Count = 0;
+    _zero(*(int*)&LD_3D.Models_Count);
+    _zero(*(int*)&LD_3D.Animations_Count);
+    _zero(*(int*)&LD_3D.Sizeof_InstancesBuffer);
+    _zero(*(int*)&LD_3D.Sizeof_VRAMBuffer);
+    //memcpy(LD_3D.Light_System.Ambient_Color,Cero,sizeof(float)*3);
 
     LD_3D.Models_LL = SinglyLinkedList_Create();
     LD_3D.Animations_LL = DoublyLinkedList_Create();
-    LD_3D.InstacesBuffer=NULL;
-    LD_3D.VRAMBuffer=NULL;
-    LD_3D.Light_System.Directional_Lights_System.LightsBuffer = NULL;
+    _NULL(*(int*)&LD_3D.InstancesBuffer);
+    _NULL(*(int*)&LD_3D.VRAMBuffer);
 }
 
 LD_Model_Object_Struct * LD_3D_ModelsLinkedList_Append(void * Data_pointer)
 {
-    //The RAW model is memcpied
+     //The RAW model is memcpied
     void * Return = D_LinkedList_add(LD_3D.Models_LL,Data_pointer,sizeof(LD_Model_Object_Struct));
-    LD_3D.Models_Count++;
+    LD_3D.Models_Count+=(Return != NULL);
     return (LD_Model_Object_Struct *)Return;
 }
 
 void LD_3D_ModelsLinkedList_Remove(LD_Model_Object_Struct * Model)
 {
     DoublyLinkedList_remove(LD_3D.Models_LL,Model, LD_Model_Object_Clear);
-    LD_3D.Models_Count--;
+    LD_3D.Models_Count-=(LD_3D.Models_Count>0);
 }
 
 void LD_3D_ModelsLinkedList_System_Delete(struct LD_Model_Object_Struct * Stack_ptr)
 {
     DoublyLinkedList_clear(LD_3D.Models_LL,LD_Model_Object_Clear);
-    LD_3D.Models_Count=0;
+    _zero(LD_3D.Models_Count);
 }
 
 LD_Animation_Object_Struct * LD_3D_AnimationsLinkedList_Append(void * Data_pointer)
 {
     //Only the pointer is memcpied, not the entire struct
     void * Return = D_LinkedList_add(LD_3D.Animations_LL,&Data_pointer,sizeof(void*));
-    LD_3D.Animations_Count++;
+    LD_3D.Animations_Count+=(Return != NULL);
     return (LD_Animation_Object_Struct *)*(uintptr_t*)Return;
 }
 
 void LD_3D_AnimationsLinkedList_Remove(LD_Animation_Object_Struct * Model)
 {
     DoublyLinkedList_remove(LD_3D.Animations_LL,Model, LD_Animation_Object_Clear);
-    LD_3D.Animations_Count--;
+    LD_3D.Animations_Count-=(LD_3D.Models_Count>0);
 }
 
 void LD_3D_AnimationsLinkedList_System_Delete(struct LD_Animation_Object_Struct * Stack_ptr)
 {
     DoublyLinkedList_clear(LD_3D.Animations_LL,LD_Animation_Object_Clear);
-    LD_3D.Animations_Count=0;
+    _zero(LD_3D.Animations_Count);
 }
 
-unsigned int LD_3D_InstaceBuffer_Set_capacity(unsigned int New_Instance_Capacity)
+unsigned int LD_3D_InstanceBuffer_Set_capacity(unsigned int New_Instance_Capacity)
 {
-    LD_3D.InstacesBuffer = realloc(LD_3D.InstacesBuffer,sizeof(InstanceStructdef) * New_Instance_Capacity);  
+    LD_3D.InstancesBuffer = _resize(InstanceStructdef,LD_3D.InstancesBuffer,New_Instance_Capacity);
+    if(LD_3D.InstancesBuffer == NULL){return 0;}
 
-    if(LD_3D.InstacesBuffer == NULL){return 0;}
-    LD_3D.Sizeof_InstacesBuffer=New_Instance_Capacity;
+    LD_3D.Sizeof_InstancesBuffer=New_Instance_Capacity;
 
     return New_Instance_Capacity;
 }
 
 void LD_3D_Fill_Instance(InstanceStructdef * Instance_Ptr, LD_Model_Object_Struct * Model_Ptr)
 {
-    memcpy(Instance_Ptr->Matrix,Identity_Matrix_4x4,4*16);
-    Instance_Ptr->Model_Data_ptr = Model_Ptr;
-//    Instance_Ptr->Joints = malloc(sizeof(struct __Joint_Struct)*Model_Ptr->JointsCount);
-    Instance_Ptr->Animation.Data = NULL;
- //   Instance_Ptr->Animation.Joints = NULL; //It points to an animation specific pose
-}
-
-void LD_3D_Instance_Set_Animation(InstanceStructdef * Instance, 
-    LD_Animation_Object_Struct * Animation_Ptr,unsigned int Animation_Number, float Speed_Multiplier)
-{
-    Instance->Animation.FLAG = 1;
-    Instance->Animation.Data = Animation_Ptr;
-    Instance->Animation.CurrentAnimation=Animation_Number;
-    Instance->Animation.CurrentFrame = 0;
-    Instance->Animation.Speed = Speed_Multiplier;
+    memcpy(Instance_Ptr->Model.Matrix,Identity_Matrix_4x4,4*16);
+    Instance_Ptr->Model.Data = Model_Ptr;
+    Instance_Ptr->Animation.Animations_Array_Size = 0;
+    Instance_Ptr->Animation.Animations_Array = NULL;
 }
 
 void LD_3D_Instance_Replicate(InstanceStructdef * From, InstanceStructdef * To, InstanceStructdef * Master_Copy)
@@ -249,32 +254,73 @@ void LD_3D_Instance_Replicate(InstanceStructdef * From, InstanceStructdef * To, 
     }
 }
 
-int LD_3D_VRAMBuffer_allocate(int New_number_of_buffers)
+char LD_3D_Instance_Set_Animations_Array(InstanceStructdef * Instance, unsigned int Capacity)
 {
-    if(LD_3D.VRAMBuffer == NULL)
+    struct _LD_Instance_Animation_Descriptor * tmp = 
+    _new(struct _LD_Instance_Animation_Descriptor,Capacity);
+    if(tmp==NULL){return 0;}
+    memset(tmp,0,sizeof(struct _LD_Instance_Animation_Descriptor)*Capacity);
+    Instance->Animation.Animations_Array=tmp;
+    Instance->Animation.Animations_Array_Size=Capacity;
+    return 1;
+}
+
+void LD_3D_Instance_Set_Animation(InstanceStructdef * Instance, unsigned int Index,
+    LD_Animation_Object_Struct * Animation_Ptr,unsigned int Animation_Number, float Speed_Multiplier)
+{
+    struct _LD_Instance_Animation_Descriptor * Curr = Instance->Animation.Animations_Array+Index;
+    Curr->FLAG = 0;
+    Curr->Data = Animation_Ptr;
+    Curr->CurrentAnimation=Animation_Number;
+    Curr->CurrentFrame = 0;
+    Curr->NextFrame = 0;
+    Curr->Speed = Speed_Multiplier;
+    Curr->Current_Pose=NULL;
+    Curr->Next_Pose=NULL;
+}
+
+char * LD_3D_Instance_Animation_Flag(InstanceStructdef * Instance,unsigned int Index)
+{
+    return &(Instance->Animation.Animations_Array+Index)->FLAG;
+}
+
+void LD_3D_Instance_Clear(InstanceStructdef * Instance_Ptr)
+{
+    free(Instance_Ptr->Animation.Animations_Array);
+    free(Instance_Ptr);
+}
+
+void LD_3D_Instance_System_Delete()
+{
+    int * i = &LD_3D.Sizeof_InstancesBuffer;
+    for(;i--;)
     {
-        LD_3D.VRAMBuffer = (VRAMBufferStructdef *)
-        malloc(sizeof(VRAMBufferStructdef) * New_number_of_buffers);
-    }
-    else
-    { 
-        LD_3D.VRAMBuffer = (VRAMBufferStructdef *) 
-        realloc(LD_3D.VRAMBuffer,sizeof(VRAMBufferStructdef) * New_number_of_buffers);
+        LD_3D_Instance_Clear(LD_3D.InstancesBuffer+*i);
     }
 
-    if(LD_3D.VRAMBuffer == NULL){return -1;}
-    for(VRAMBufferStructdef * ex =LD_3D.VRAMBuffer;
-     ex < LD_3D.VRAMBuffer+New_number_of_buffers;ex++)
-    {ex->FLAG=128;}
+    free(LD_3D.InstancesBuffer);
+    _NULL(*(int*)&LD_3D.InstancesBuffer);
+}
+
+unsigned int LD_3D_VRAMBuffer_allocate(int New_number_of_buffers)
+{
+    LD_3D.VRAMBuffer =_resize(VRAMBufferStructdef,LD_3D.VRAMBuffer,New_number_of_buffers);
+    if(LD_3D.VRAMBuffer == NULL){return 0;}
+
+    array_foreach(VRAMBufferStructdef,ex,LD_3D.VRAMBuffer,New_number_of_buffers)
+    {
+        {ex->FLAG=128;}
+    }
+
     LD_3D.Sizeof_VRAMBuffer=New_number_of_buffers;
-    return LD_3D.Sizeof_VRAMBuffer;
+    return New_number_of_buffers;
 }
 
 void LD_3D_VRAMBuffer_Clear(VRAMBufferStructdef* VRAMBuffer,char glDelete)
 {
-    VRAMBuffer->Sizeof_Vec3Buffers=0;
-    VRAMBuffer->Sizeof_Vec2Buffers=0;
-    VRAMBuffer->IndicesCount=0;
+    _zero(VRAMBuffer->Sizeof_Vec3Buffers);
+    _zero(VRAMBuffer->Sizeof_Vec2Buffers);
+    _zero(VRAMBuffer->IndicesCount);
     VRAMBuffer->FLAG |= 0x80;
     if(glDelete)
     {
@@ -287,7 +333,7 @@ void LD_3D_VRAMBuffer_Clear(VRAMBufferStructdef* VRAMBuffer,char glDelete)
     }
 }
 
-void LD_3D_VRAMBuffer_Delete()
+void LD_3D_VRAMBuffer_System_Delete()
 {
     int * i = &LD_3D.Sizeof_VRAMBuffer;
     for(;i--;)
@@ -296,25 +342,25 @@ void LD_3D_VRAMBuffer_Delete()
     }
 
     free(LD_3D.VRAMBuffer);
-    LD_3D.VRAMBuffer = NULL;
+    _NULL(*(int*)&LD_3D.VRAMBuffer);
 }
 
 
-void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * InstacesBuffer_First, InstanceStructdef * InstacesBuffer_Last,char FLAG)
+void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * InstancesBuffer_First, InstanceStructdef * InstancesBuffer_Last,char FLAG)
 {
     VRAMPtr->FLAG=FLAG;
-    VRAMPtr->First_instance = InstacesBuffer_First;
-    VRAMPtr->Last_instance = InstacesBuffer_Last;
+    VRAMPtr->First_instance = InstancesBuffer_First;
+    VRAMPtr->Last_instance = InstancesBuffer_Last;
 
-    int * so = &VRAMPtr->Sizeof_Vec3Buffers; *so=0;
-    int * si = &VRAMPtr->Sizeof_Vec2Buffers; *si=0;
-    int * vc = &VRAMPtr->IndicesCount; *vc=0;
+    int * so = &VRAMPtr->Sizeof_Vec3Buffers; _zero(*so);
+    int * si = &VRAMPtr->Sizeof_Vec2Buffers; _zero(*si);
+    int * vc = &VRAMPtr->IndicesCount; _zero(*vc);
 
-    for (InstanceStructdef * ex = InstacesBuffer_First;ex<=InstacesBuffer_Last;ex++ )
+    for (InstanceStructdef * ex = InstancesBuffer_First;ex<=InstancesBuffer_Last;ex++ )
     {
-        *so += ex->Model_Data_ptr->Sizeof_Vec3Buffers;
-        *si += ex->Model_Data_ptr->Sizeof_Vec2Buffers;
-        *vc += ex->Model_Data_ptr->IndicesCount;
+        *so += ex->Model.Data->Sizeof_Vec3Buffers;
+        *si += ex->Model.Data->Sizeof_Vec2Buffers;
+        *vc += ex->Model.Data->IndicesCount;
     }
 
     GLuint * VBO_Position = &VRAMPtr->VBO_Position;
@@ -338,10 +384,10 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
     glBufferData(GL_ARRAY_BUFFER,*so,NULL,*Usage);  
     uint8_t * tptr = (uint8_t*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
     int sb;
-    for (InstanceStructdef * iptr = InstacesBuffer_First;iptr<= InstacesBuffer_Last ;iptr++)
+    for (InstanceStructdef * iptr = InstancesBuffer_First;iptr<= InstancesBuffer_Last ;iptr++)
     {
-        sb = iptr->Model_Data_ptr->Sizeof_Vec3Buffers;
-        memcpy(tptr,iptr->Model_Data_ptr->Vertices,sb);
+        sb = iptr->Model.Data->Sizeof_Vec3Buffers;
+        memcpy(tptr,iptr->Model.Data->Vertices,sb);
         tptr+=sb;
     }
     glUnmapBuffer(GL_ARRAY_BUFFER);
@@ -349,10 +395,10 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
     glBindBuffer(GL_ARRAY_BUFFER,*VBO_Normals);
     glBufferData(GL_ARRAY_BUFFER,*so,NULL,*Usage);  
     tptr = (uint8_t*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
-    for (InstanceStructdef * iptr = InstacesBuffer_First;iptr<= InstacesBuffer_Last ;iptr++)
+    for (InstanceStructdef * iptr = InstancesBuffer_First;iptr<= InstancesBuffer_Last ;iptr++)
     {
-        sb = iptr->Model_Data_ptr->Sizeof_Vec3Buffers;
-        memcpy(tptr,iptr->Model_Data_ptr->Normals,sb);
+        sb = iptr->Model.Data->Sizeof_Vec3Buffers;
+        memcpy(tptr,iptr->Model.Data->Normals,sb);
         tptr+=sb;
     }
     glUnmapBuffer(GL_ARRAY_BUFFER);
@@ -360,10 +406,10 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
     glBindBuffer(GL_ARRAY_BUFFER,*VBO_UV);
     glBufferData(GL_ARRAY_BUFFER,*si,NULL,*Usage);  
     tptr = (uint8_t*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
-    for (InstanceStructdef * iptr = InstacesBuffer_First;iptr<= InstacesBuffer_Last ;iptr++)
+    for (InstanceStructdef * iptr = InstancesBuffer_First;iptr<= InstancesBuffer_Last ;iptr++)
     {
-        sb = iptr->Model_Data_ptr->Sizeof_Vec2Buffers;
-        memcpy(tptr,iptr->Model_Data_ptr->UV,sb);
+        sb = iptr->Model.Data->Sizeof_Vec2Buffers;
+        memcpy(tptr,iptr->Model.Data->UV,sb);
         tptr+=sb;
     }
     glUnmapBuffer(GL_ARRAY_BUFFER);
@@ -390,17 +436,17 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
         int * indptr = (int *) glMapBuffer(GL_ELEMENT_ARRAY_BUFFER,GL_WRITE_ONLY);
 	//printf("indptr = %lx\n",indptr);
         int IndexIndex=0,IndexAcc=0;
-        for (InstanceStructdef * iptr = InstacesBuffer_First;iptr<= InstacesBuffer_Last ;iptr++)
+        for (InstanceStructdef * iptr = InstancesBuffer_First;iptr<= InstancesBuffer_Last ;iptr++)
         {
-            sb = iptr->Model_Data_ptr->IndicesCount;
-	    //printf("IC: %d @ %lx \n",sb, iptr->Model_Data_ptr);
+            sb = iptr->Model.Data->IndicesCount;
+	    //printf("IC: %d @ %lx \n",sb, iptr->Model.Data);
             for(int iii=0;iii<sb;iii++)
             {
-                indptr[IndexIndex] = iptr->Model_Data_ptr->Indices[iii] + IndexAcc ;
+                indptr[IndexIndex] = iptr->Model.Data->Indices[iii] + IndexAcc ;
                 IndexIndex++;
 		//printf("->%d\n",indptr[IndexIndex]);
             }
-            IndexAcc+=iptr->Model_Data_ptr->VertexCount;
+            IndexAcc+=iptr->Model.Data->VertexCount;
         }
 
     //printf("-------\n");
@@ -424,52 +470,252 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
 
 }
 
-void LD_3D_Ambient_Light_Set(float * Vec3_Ambient_Color)
+void __LD_3D_Update_Get_Frames(struct _LD_Instance_Animation_Descriptor * Animation,
+float Delta,float BASE_FPS)
 {
-    memcpy(LD_3D.Light_System.Ambient_Color,Vec3_Ambient_Color,12);
-}
+    struct LD_Animation_Object_Struct * Data = Animation->Data;
+    struct ___Anim_Struct * ActualAnimation = Data->Animations+Animation->CurrentAnimation;
+    char FLAG = Animation->FLAG;
 
-int LD_3D_Directional_LightsBuffer_Allocate(int Capacity)
-{
-    DirLightStructdef * nptr;
+    char IS_ANIMATED = _checkbits(FLAG,1);
 
-    if(LD_3D.Light_System.Directional_Lights_System.LightsBuffer==NULL)
+    char IS_REVERSED = _checkbits(FLAG,4);
+    #define IS_NOT_REVERSED !IS_REVERSED
+
+    char IS_LOOPING = _checkbits(FLAG,2);
+    #define IS_NOT_LOOPING !IS_LOOPING
+
+     Animation->CurrentFrame=Animation->NextFrame;
+
+    unsigned int MaxFrame = ActualAnimation->num_frames-1;
+    unsigned int CurrFrame = (int) Animation->CurrentFrame;
+    #define IS_IN_BOUNDS (CurrFrame>=0 && CurrFrame<=MaxFrame)
+    CurrFrame=(CurrFrame*IS_IN_BOUNDS)+(!IS_IN_BOUNDS*MaxFrame );
+
+    unsigned int ATEND = CurrFrame == MaxFrame;
+    unsigned int ATBEG = CurrFrame == 0;
+
+   
+
+    unsigned int NextFrame = (CurrFrame+(!ATEND))*(!ATEND);
+
+
+
+    float FrameRate = ActualAnimation->framerate;
+    float FollFrame =Animation->CurrentFrame+
+    (
+        (1.f+(-2.f * (IS_REVERSED*1.f)))*
+        (FrameRate/BASE_FPS * Delta)*Animation->Speed
+    ) * (IS_ANIMATED*1.f);
+    
+    
+    float MaxFramef = (float) MaxFrame+1;
+    char ENDED = (FollFrame >= MaxFramef);
+    char ENDED_REVERSED = (IS_REVERSED && FollFrame<=0);
+    if(IS_LOOPING && ( ENDED || ENDED_REVERSED ))
     {
-        nptr = 
-        (DirLightStructdef*) malloc(sizeof(DirLightStructdef) * Capacity);
+        FollFrame+=MaxFramef*((-1.f*(ENDED*1.f)) + ((ENDED_REVERSED*1.f)));
+        if(FollFrame >= MaxFramef){FollFrame=0;}
     }
-    else
+    
+
+    float fCurrFrame = Animation->CurrentFrame;
+   
+    float Factor = (fCurrFrame - (float) (int) fCurrFrame);
+    Factor = (Factor * (Factor!=1.f)*1.f);
+    
+
+    Animation->Factor= Factor;
+    Animation->NextFrame= FollFrame;
+
+/*
+    printf("(%x -%d-)=(%x)(%x) %d -> %d | ",Animation->FLAG,Animation->FLAG,IS_REVERSED,IS_LOOPING,CurrFrame,NextFrame);
+    printf("%f -> %f | ",Animation->CurrentFrame,FollFrame);
+    printf("f: %f\n",Factor);
+  */    
+
+    Animation->Current_Pose = Data->Poses+(Data->PosesCount*CurrFrame);
+    Animation->Next_Pose  = Data->Poses+(Data->PosesCount*NextFrame);
+
+
+
+    #undef IS_IN_BOUNDS
+    #undef IS_REVERSED
+    #undef IS_NOT_LOOPING
+}
+
+void __LD_3D_Update_Calculate_Pose_Position(struct __Joint_Struct * MJoint,
+    void * QNew, void * TNew,void * Original_Vector, float  Weight, void *Result)
+{
+    float QDiff[4]; Quaternion_Diff_Unit(MJoint->rotate,QNew,QDiff);
+    float _temp_temp[3]; //<-Temporal transform for this cycle.
+    V3V3SUB((float*)Original_Vector,(float*)MJoint->translate,_temp_temp); 
+    QuaternionRotateV3(QDiff,_temp_temp,_temp_temp);
+    V3V3ADD(_temp_temp,TNew,_temp_temp);
+    V3ScalarMUL(_temp_temp,Weight,_temp_temp);
+    V3V3ADD(Result,_temp_temp,Result);
+}
+
+void __LD_3D_Update_Calculate_Pose_Normal(struct __Joint_Struct * MJoint,
+    void * QNew, void * TNew,void * Original_Vector, float  Weight, void *Result)
+{
+    
+    float _temp_temp[3]; //<-Temporal transform for this cycle.
+    float QDiff[4]; Quaternion_Diff_Unit(MJoint->rotate,QNew,QDiff);
+        QuaternionRotateV3(QDiff,Original_Vector,_temp_temp);
+        V3ScalarMUL(_temp_temp,Weight,_temp_temp);
+        V3V3ADD((float*)Result,(float*)_temp_temp,(float*)Result);
+}
+
+void __LD_3D_Update_Calculate_Pose(float * Original_Vector,
+unsigned char * BWeight,unsigned char * BIndex,struct __Joint_Struct * MJoints,
+struct LD_Instance_Animation * Anim, void * Result_Vector,
+void (*Processing_Function) (struct __Joint_Struct *,void*,void*,void*,float,void*))
+{
+    float Pivot[3]; memcpy(Pivot,Original_Vector,sizeof(float)*3);
+    Original_Vector = Pivot;
+
+    
+
+    array_foreach(struct _LD_Instance_Animation_Descriptor,CurrAnim,
+            Anim->Animations_Array,Anim->Animations_Array_Size)
     {
-        nptr= (DirLightStructdef*) 
-        realloc(LD_3D.Light_System.Directional_Lights_System.LightsBuffer,
-        sizeof(DirLightStructdef) * Capacity);
+        if(!_checkbits(CurrAnim->FLAG,1<<7))
+        {
+        struct __Joint_Struct * AJoints=CurrAnim->Current_Pose;
+        struct __Joint_Struct * NJoints=CurrAnim->Next_Pose;
+        float Frame = CurrAnim->CurrentFrame;
+
+        char INTERPOLATION = _checkbits(CurrAnim->FLAG,8);
+        float Result[3]={0,0,0};
+        float CurW = 0;
+        float Factor = CurrAnim->Factor;
+
+        //printf("V: (%f,%f,%f)\n",Vrexp->x,Vrexp->y,Vrexp->z);
+        for(char _w_ = 0;_w_<4&&CurW<1.f ;_w_++)
+        {
+            float WW = BWeight[_w_] / 255.f;CurW+=WW;
+            unsigned char BB = BIndex[_w_];
+            struct __Joint_Struct * AJoint = AJoints+BB; //<- Current Pose
+            struct __Joint_Struct * NJoint = NJoints+BB; //<- Next Pose
+            struct __Joint_Struct * MJoint = MJoints+BB; //<- Base Pose
+
+            float QNew[4]; memcpy(QNew,AJoint->rotate,sizeof(float)*4);          
+            float TNew[3]; memcpy(TNew,AJoint->translate,sizeof(float)*3); 
+            
+            if(INTERPOLATION)
+            {
+                V3Lerp(TNew,NJoint->translate,Factor,TNew);
+                __QuatInterpolation(QNew,NJoint->rotate,Factor,QNew);
+            }
+
+           Processing_Function(MJoint,QNew,TNew,Original_Vector,WW,Result);
+        }
+        memcpy(Original_Vector,Result,sizeof(float)*3);
+        }
     }
 
-    if(nptr == NULL){return -1;}
 
-    LD_3D.Light_System.Directional_Lights_System.LightsBuffer = nptr;
-    LD_3D.Light_System.Directional_Lights_System.Lights_Count= Capacity;
-    return Capacity;
+    memcpy(Result_Vector,Pivot,sizeof(float)*3);
 }
 
-int LD_3D_Directional_LightsBuffer_Delete()
+void LD_3D_Update(float Delta, float BASE_FPS)
 {
-    DirLightStructdef* Exp = LD_3D.Light_System.Directional_Lights_System.LightsBuffer;
-   // DirLightStructdef* End = Exp + LD_3D.Light_System.Directional_Lights_System.Lights_Count;
-    LD_3D.Light_System.Directional_Lights_System.Lights_Count =0;
+    array_foreach(VRAMBufferStructdef,Vex,LD_3D.VRAMBuffer,LD_3D.Sizeof_VRAMBuffer)
+    {
+        if((Vex->FLAG & 1) == 0 & (Vex->FLAG & 0x80) == 0) //If the buffer is non-static and drawable
+        {      
+                /* Update animations, update poses pointers*/
+            array_range(InstanceStructdef,Iexp,Vex->First_instance,Vex->Last_instance)
+            {
+                struct LD_Instance_Animation * Anim = &Iexp->Animation;
+                struct _LD_Instance_Animation_Descriptor * Anim_Arr = Anim->Animations_Array;
+                            
+                /*If the array is null, then its size must be 0*/
+                array_foreach(struct _LD_Instance_Animation_Descriptor,Aexp,
+                                Anim_Arr,Anim->Animations_Array_Size)
+                {        
+                    __LD_3D_Update_Get_Frames(Aexp,Delta,BASEFPS);
+                }
+            }
 
-    free(Exp);
-    LD_3D.Light_System.Directional_Lights_System.LightsBuffer = NULL;
-}
 
-int LD_3D_Directional_Light_Set (DirLightStructdef * Directional_Light, float * Vec3_Vector, float Intensity, float * Vec3_Color)
-{
-    memcpy(Directional_Light->Vector,Vec3_Vector,12);
-    Directional_Light->Intensity = Intensity;
-    float Cero [3]={0,0,0};
-    if(Vec3_Color != NULL){memcpy(Directional_Light->Color,Vec3_Color,12);}
-    else{memcpy(Directional_Light->Color,Cero,12);}
+		    glBindBuffer(GL_ARRAY_BUFFER,Vex->VBO_Position);
+            glBufferData(GL_ARRAY_BUFFER,Vex->Sizeof_Vec3Buffers,NULL,Vex->Usage);
+            float * ptr =(float*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
+            InstanceStructdef * Iend =  Vex->Last_instance; //Check this line for a better solution
+            for(InstanceStructdef * Iexp = Vex->First_instance; Iexp <= Iend; Iexp++)
+            {
+                struct LD_Model_Object_Struct * Model_Data = Iexp->Model.Data;
+                struct LD_Instance_Animation * Anim = &Iexp->Animation;
+                            
+                unsigned char * BIndex = Model_Data->BlendingIndices;
+                unsigned char * BWeight = Model_Data->BlendingWeights;
+
+                //Dynamic Positions update//
+                struct __Joint_Struct * MJoints= Model_Data->Joints;          
+
+                array_foreach(struct __Vec3_Struct,Vrexp,
+                                Model_Data->Vertices,Model_Data->VertexCount)
+                {
+                    
+                    // Animation
+                    float _temp[3]={0,0,0}; //<- Check for a XOR solution.
+
+                    __LD_3D_Update_Calculate_Pose((float*)Vrexp,BWeight,
+                    BIndex,MJoints,Anim,_temp,
+                    __LD_3D_Update_Calculate_Pose_Position);
+                    BIndex+=4;
+                    BWeight+=4;
+
+                    //Apply entire transformation matrix
+                    __M4x4V4_PseudoV3_W1_MUL_(Iexp->Model.Matrix,_temp,ptr);
+                    ptr+=3;
+                   
+                }
+            }   
+            glUnmapBuffer(GL_ARRAY_BUFFER);
+            
+
+            glBindBuffer(GL_ARRAY_BUFFER,Vex->VBO_Normals);
+            glBufferData(GL_ARRAY_BUFFER,Vex->Sizeof_Vec3Buffers,NULL,Vex->Usage);
+            ptr =(float*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
+            Iend =  Vex->Last_instance; //Check this line for a better solution
+            for(InstanceStructdef * Iexp = Vex->First_instance; Iexp <= Iend; Iexp++)
+            {
+                struct LD_Model_Object_Struct * Model_Data = Iexp->Model.Data;
+            struct LD_Instance_Animation * Anim = &Iexp->Animation;
+                        
+            unsigned char * BIndex = Model_Data->BlendingIndices;
+            unsigned char * BWeight = Model_Data->BlendingWeights;
+
+            //Dynamic Positions update//
+            struct __Joint_Struct * MJoints= Model_Data->Joints;    
+
+            array_foreach(struct __Vec3_Struct,Vrexp,
+                            Model_Data->Normals,Model_Data->VertexCount)
+            {
+                        // Animation
+                    float _temp[3]={0,0,0}; //<- Check for a XOR solution.
+
+                    __LD_3D_Update_Calculate_Pose((float*)Vrexp,BWeight,
+                    BIndex,MJoints,Anim,_temp,
+                    __LD_3D_Update_Calculate_Pose_Normal);
+                    BIndex+=4;
+                    BWeight+=4;
+
+                    __M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL_(Iexp->Model.Matrix,_temp,ptr);
+                    ptr+=3;                          
+                }               
+            }
+            glUnmapBuffer(GL_ARRAY_BUFFER);
+            glBindBuffer(GL_ARRAY_BUFFER,0);
+        }
+    } 
 }
+    /****************************/
+
+
 
 void LD_3D_Draw_G_Pass()
 {
@@ -488,283 +734,9 @@ void LD_3D_Draw_G_Pass()
     }
 }
 
-void LD_3D_Draw_L_Pass_Ambient()
-{
-    float * Ambient = LD_3D.Light_System.Ambient_Color;
-    //Dibujar primero la luz ambiental//
-    glClearColor(Ambient[0],Ambient[1],Ambient[2],1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-void LD_3D_Draw_L_Pass_Directional(GLint Vec4_Vector_Intensity_Location, GLint Vec3_Color_Location, GLuint Square_VAO)
-{
-        //******* Directional lights are about to be drawn, one pass per light, its drawed on a texture*******//
-    DirLightStructdef * Vex =LD_3D.Light_System.Directional_Lights_System.LightsBuffer;
-    DirLightStructdef * Vend = Vex + LD_3D.Light_System.Directional_Lights_System.Lights_Count;
-
-    glBindVertexArray(Square_VAO);
-    for(;Vex<Vend;Vex++)
-    {
-        glUniform4fv(Vec4_Vector_Intensity_Location,1,(GLfloat* )Vex);
-        glUniform3fv(Vec3_Color_Location,1,Vex->Color);
-
-        glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
-    }
-}
 
 
-
-    /** Mathematical operations **/
-    /*By default it uses the libLDCC Extern/LD_Math.h*/
-#include "../../Extern/LD_Math.h"
-#define __M4x4V4_PseudoV3_W1_MUL_ M4x4V4_PseudoV3_W1_MUL
-#define __M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL_ M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL
-
-void QuaternionUnit_Inverse(void * Quaternion, void * Result) //Needs ASM implementation
-{
-    ((float*)Result)[0] =((float*)Quaternion)[0] *-1.f;
-    ((float*)Result)[1] =((float*)Quaternion)[1] *-1.f;
-    ((float*)Result)[2] =((float*)Quaternion)[2] *-1.f;
-    ((float*)Result)[3] =((float*)Quaternion)[3] ;
-}
-
-void Quaternion_Diff_Unit(void * Q1, void * Q2, void * Result) //Needs ASM implementation
-{
-    QuaternionUnit_Inverse(Q1,Result);
-    QuaternionMUL(Result,Q2,Result);
-}
-
-#define QuatInterpolation V4Lerp
-
-void __LD_3D_Update_Get_Frames(struct LD_Instance_Anim_Descriptor_Struct * Animation,
-struct __Joint_Struct ** AJoints,struct __Joint_Struct ** NJoints)
-{
-    LD_Animation_Object_Struct * Data = Animation->Data;
-
-    char IS_NOT_REVERSED = ((Animation->FLAG & 4) != 4);
-    char IS_LOOPING = ((Animation->FLAG & 2) == 2);
-    #define IS_REVERSED !IS_NOT_REVERSED
-    #define IS_NOT_LOOPING !IS_LOOPING
-
-    unsigned int MaxFrame = Data->Animations[Animation->CurrentAnimation].num_frames-1;
-    unsigned int FirstFrame= MaxFrame * IS_REVERSED;
-    unsigned int LastFrame = MaxFrame * IS_NOT_REVERSED;
-    unsigned int CurrFrame = (int) Animation->CurrentFrame;
-    #define IS_IN_BOUNDS (CurrFrame>=0 && CurrFrame<=MaxFrame)
-    CurrFrame=(CurrFrame*IS_IN_BOUNDS)+(!IS_IN_BOUNDS*LastFrame );
-    #define IS_LAST_FRAME (CurrFrame == LastFrame)
-    #define IS_NOT_LAST_FRAME (CurrFrame != LastFrame)
-    unsigned int NextFrame = ((CurrFrame
-            +((CurrFrame<LastFrame)*IS_NOT_REVERSED)
-            -((CurrFrame>LastFrame)*(!IS_NOT_REVERSED))) 
-            *IS_NOT_LAST_FRAME)
-            +
-            (IS_LAST_FRAME*(
-            (IS_NOT_LOOPING*LastFrame)));
-
-    float FrameRate = Data->Animations[Animation->CurrentAnimation].framerate;
-    
-    //printf("(%x)=(%x)(%x) %d -> %d\n",Animation->FLAG,IS_REVERSED,IS_LOOPING,CurrFrame,NextFrame);
-
-    //Animation->CurrentFrame+=(FrameRate/BASE_FPS * Delta)*Animation->Speed;
-
-    *AJoints = Data->Poses+(Data->PosesCount*CurrFrame);
-    *NJoints = Data->Poses+(Data->PosesCount*NextFrame);
-
-    #undef IS_IN_BOUNDS
-    #undef IS_LAST_FRAME
-    #undef IS_NOT_LAST_FRAME
-    #undef IS_REVERSED
-    #undef IS_NOT_LOOPING
-}
-
-void __LD_3D_Update_Calculate_Pose(struct __Vec3_Struct * Original_Vector,
-unsigned char * BWeight,unsigned char * BIndex,
-struct __Joint_Struct * MJoints, 
-struct __Joint_Struct * AJoints,
-struct __Joint_Struct * NJoints,
-void * Result_Vector, float Frame, char INTERPOLATION)
-{ 
-    float CurW = 0;
-    //printf("V: (%f,%f,%f)\n",Vrexp->x,Vrexp->y,Vrexp->z);
-    for(char _w_ = 0;_w_<4&&CurW<1.f ;_w_++)
-    {
-        float WW = BWeight[_w_] / 255.f;CurW+=WW;
-        unsigned char BB = BIndex[_w_];
-        struct __Joint_Struct * AJoint = AJoints+BB; //<- Current Pose
-        struct __Joint_Struct * NJoint = NJoints+BB; //<- Next Pose
-        struct __Joint_Struct * MJoint = MJoints+BB; //<- Base Pose
-
-        float _temp_temp[3]; //<-Temporal transform for this cycle.
-        
-        float QNew[4]; memcpy(QNew,AJoint->rotate,sizeof(float)*4);          
-        float TNew[3]; memcpy(TNew,AJoint->translate,sizeof(float)*3); 
-        
-        if(INTERPOLATION)
-        {
-            float Currentframe = (float) ((int) Frame);
-            float factor = ( Frame -Currentframe );
-            V3Lerp(TNew,NJoint->translate,factor,TNew);
-            QuatInterpolation(QNew,NJoint->rotate,factor,QNew);
-        }
-
-        float QDiff[4]; Quaternion_Diff_Unit(MJoint->rotate,QNew,QDiff);
-        V3V3SUB((float*)Original_Vector,(float*)MJoint->translate,_temp_temp); 
-        QuaternionRotateV3(QDiff,_temp_temp,_temp_temp);
-        V3V3ADD(_temp_temp,TNew,_temp_temp);
-        V3ScalarMUL(_temp_temp,WW,_temp_temp);
-        V3V3ADD(Result_Vector,_temp_temp,Result_Vector);
-    }
-}
-
-void __LD_3D_Update_Calculate_Pose_Normal(struct __Vec3_Struct * Original_Vector,
-unsigned char * BWeight,unsigned char * BIndex,
-struct __Joint_Struct * MJoints, 
-struct __Joint_Struct * AJoints,
-struct __Joint_Struct * NJoints,
-void * Result_Vector, float Frame, char INTERPOLATION)
-{ 
-    float CurW = 0;
-    //printf("V: (%f,%f,%f)\n",Vrexp->x,Vrexp->y,Vrexp->z);
-    for(char _w_ = 0;_w_<4&&CurW<1.f ;_w_++)
-    {
-        float WW = BWeight[_w_] / 255.f;CurW+=WW;
-        unsigned char BB = BIndex[_w_];
-        struct __Joint_Struct * AJoint = AJoints+BB; //<- Current Pose
-        struct __Joint_Struct * NJoint = NJoints+BB; //<- Next Pose
-        struct __Joint_Struct * MJoint = MJoints+BB; //<- Base Pose
-
-        float _temp_temp[3]; //<-Temporal transform for this cycle.
-        
-        float QNew[4]; memcpy(QNew,AJoint->rotate,sizeof(float)*4);          
-        
-        if(INTERPOLATION)
-        {
-            float Currentframe = (float) ((int) Frame);
-            float factor = ( Frame -Currentframe );
-            QuatInterpolation(QNew,NJoint->rotate,factor,QNew);
-        }
-        float QDiff[4]; Quaternion_Diff_Unit(MJoint->rotate,QNew,QDiff);
-        QuaternionRotateV3(QDiff,Original_Vector,_temp_temp);
-        V3V3ADD((float*)Result_Vector,(float*)_temp_temp,(float*)Result_Vector);
-    }
-}
-
-#undef QuatInterpolation
-
-void LD_3D_Update(float Delta, float BASE_FPS)
-{
-    VRAMBufferStructdef * Vex =LD_3D.VRAMBuffer;
-    VRAMBufferStructdef * Vend = Vex + LD_3D.Sizeof_VRAMBuffer;
-
-    InstanceStructdef * Iexp;
-    InstanceStructdef * Iend;
-    struct __Vec3_Struct * Vrexp;
-    struct __Vec3_Struct * Vrend;
-
-    for(;Vex<Vend;Vex++)
-    {
-        if((Vex->FLAG & 1) == 0 & (Vex->FLAG & 0x80) == 0) //If the buffer is non-static and drawable
-        {      
-		    glBindBuffer(GL_ARRAY_BUFFER,Vex->VBO_Position);
-            glBufferData(GL_ARRAY_BUFFER,Vex->Sizeof_Vec3Buffers,NULL,Vex->Usage);
-            float * ptr =(float*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
-            Iend =  Vex->Last_instance; //Check this line for a better solution
-            for(Iexp = Vex->First_instance; Iexp <= Iend; Iexp++)
-            {
-                struct __Joint_Struct * MJoints= Iexp->Model_Data_ptr->Joints;          
-                struct __Joint_Struct * AJoints;
-                struct __Joint_Struct * NJoints;
-
-                if(Iexp->Animation.Data==NULL){AJoints = MJoints;NJoints=MJoints;}
-                else
-                {__LD_3D_Update_Get_Frames(&Iexp->Animation,&AJoints,&NJoints);}
-
-		        //Dynamic Positions update
-                Vrexp = Iexp->Model_Data_ptr->Vertices;
-                Vrend = Vrexp + Iexp->Model_Data_ptr->VertexCount;
-                unsigned char * BIndex = Iexp->Model_Data_ptr->BlendingIndices;
-                unsigned char * BWeight = Iexp->Model_Data_ptr->BlendingWeights;
-
-                char INTERPOLATION = (Iexp->Animation.FLAG & 8) == 8;
- 
-                for(;Vrexp<Vrend;Vrexp++) 
-                {
-                    // Animation
-                    float _temp[3]={0,0,0};
-
-                    __LD_3D_Update_Calculate_Pose(Vrexp,BWeight,
-                    BIndex,MJoints,AJoints,NJoints,
-                    _temp,Iexp->Animation.CurrentFrame,INTERPOLATION);
-                    BIndex+=4;
-                    BWeight+=4;
-
-                    //Apply entire transformation matrix
-                    __M4x4V4_PseudoV3_W1_MUL_(Iexp->Matrix,_temp,ptr);
-                    ptr+=3;
-                   
-                }
-            }
-            glUnmapBuffer(GL_ARRAY_BUFFER);
-            
-
-            glBindBuffer(GL_ARRAY_BUFFER,Vex->VBO_Normals);
-                glBufferData(GL_ARRAY_BUFFER,Vex->Sizeof_Vec3Buffers,NULL,Vex->Usage);
-                 ptr =(float*) glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
-                Iend =  Vex->Last_instance; //Check this line for a better solution
-                for(Iexp = Vex->First_instance; Iexp <= Iend; Iexp++)
-                {
-                    struct __Joint_Struct * MJoints= Iexp->Model_Data_ptr->Joints;          
-                    struct __Joint_Struct * AJoints;
-                    struct __Joint_Struct * NJoints;
-
-                    if(Iexp->Animation.Data==NULL){AJoints = MJoints;NJoints=MJoints;}
-                    else
-                    {__LD_3D_Update_Get_Frames(&Iexp->Animation,&AJoints,&NJoints);}
-                    char INTERPOLATION = (Iexp->Animation.FLAG & 8) == 8;                       
-
-
-                    /** Dynamic Normals update**/
-                    Vrexp = Iexp->Model_Data_ptr->Normals;
-                    Vrend = Vrexp + Iexp->Model_Data_ptr->VertexCount;
-                    unsigned char * BIndex = Iexp->Model_Data_ptr->BlendingIndices;
-                    unsigned char * BWeight = Iexp->Model_Data_ptr->BlendingWeights; 
-
-                    for(;Vrexp<Vrend;Vrexp++) 
-                    {
-                        /** Animation **/
-                        float _temp[3]={0,0,0};
-
-                        __LD_3D_Update_Calculate_Pose_Normal(Vrexp,
-                        BWeight,BIndex,
-                        MJoints,AJoints,NJoints,_temp,
-                        Iexp->Animation.CurrentFrame,INTERPOLATION);
-                        BIndex+=4;
-                        BWeight+=4; 
-
-                        /*Apply only affine transformation*/
-                        __M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL_(Iexp->Matrix,_temp,ptr);
-                        ptr+=3;                          
-                    }               
-
-                    /***************************************/
-                        /** Update Frame counter**/
-                        
-                 Iexp->Animation.CurrentFrame+=
-                    (Iexp->Animation.Data->Animations[Iexp->Animation.CurrentAnimation].framerate
-                    /BASEFPS * Delta) 
-                    *Iexp->Animation.Speed * (1.f+(-2.f * ((Iexp->Animation.FLAG & 4) == 4)));
-        if(((Iexp->Animation.FLAG & 2) == 2) && Iexp->Animation.CurrentFrame>(float) Iexp->Animation.Data->Animations[Iexp->Animation.CurrentAnimation].num_frames)
-        {Iexp->Animation.CurrentFrame=0;}
-                    
-                    /***************************************/
-                }
-
-                glUnmapBuffer(GL_ARRAY_BUFFER);
-            glBindBuffer(GL_ARRAY_BUFFER,0);
-        }
-    } 
-}
-    /****************************/
-
+#undef __QuatInterpolation
+#undef __M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL_
+#undef __M4x4V4_PseudoV3_W1_MUL_
 #endif
