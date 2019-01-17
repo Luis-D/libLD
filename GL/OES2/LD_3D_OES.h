@@ -133,7 +133,7 @@ struct LD_3D_Struct
                 // 2: Reverse
                 // 3: Frames Interpolation
 
-                // 8: Don't play if set
+                // 8: Ignore if set
                 struct __Joint_Struct * Current_Pose;
                 struct __Joint_Struct * Next_Pose; //<- Useful if Interpolated
     
@@ -232,6 +232,8 @@ unsigned int LD_3D_InstanceBuffer_Set_capacity(unsigned int New_Instance_Capacit
 {
     LD_3D.InstancesBuffer = _resize(InstanceStructdef,LD_3D.InstancesBuffer,New_Instance_Capacity);
     if(LD_3D.InstancesBuffer == NULL){return 0;}
+
+   
 
     LD_3D.Sizeof_InstancesBuffer=New_Instance_Capacity;
 
@@ -473,9 +475,12 @@ void LD_3D_Fill_VRAMBuffer(VRAMBufferStructdef * VRAMPtr, InstanceStructdef * In
 void __LD_3D_Update_Get_Frames(struct _LD_Instance_Animation_Descriptor * Animation,
 float Delta,float BASE_FPS)
 {
-    struct LD_Animation_Object_Struct * Data = Animation->Data;
-    struct ___Anim_Struct * ActualAnimation = Data->Animations+Animation->CurrentAnimation;
     char FLAG = Animation->FLAG;
+    //char IS_IGNORED = _checkbits(FLAG,1<7);
+    struct LD_Animation_Object_Struct * Data = Animation->Data;
+    if(Data==NULL){return;}
+    struct ___Anim_Struct * ActualAnimation = Data->Animations+Animation->CurrentAnimation;
+    
 
     char IS_ANIMATED = _checkbits(FLAG,1);
 
@@ -508,6 +513,10 @@ float Delta,float BASE_FPS)
         (FrameRate/BASE_FPS * Delta)*Animation->Speed
     ) * (IS_ANIMATED*1.f);
     
+    float fCurrFrame = Animation->CurrentFrame;
+    float Factor = (fCurrFrame - (float) (int) fCurrFrame);
+    Factor = (Factor * (Factor!=1.f)*1.f);
+
     
     float MaxFramef = (float) MaxFrame+1;
     char ENDED = (FollFrame >= MaxFramef);
@@ -517,12 +526,23 @@ float Delta,float BASE_FPS)
         FollFrame+=MaxFramef*((-1.f*(ENDED*1.f)) + ((ENDED_REVERSED*1.f)));
         if(FollFrame >= MaxFramef){FollFrame=0;}
     }
+
+    if(IS_NOT_LOOPING)
+    {
+        if((FollFrame >= MaxFramef-1))
+        {
+            FollFrame =MaxFramef-1;
+        }
+        if((FollFrame<=0))
+        {
+            FollFrame=0;
+        }
+    }
     
 
-    float fCurrFrame = Animation->CurrentFrame;
    
-    float Factor = (fCurrFrame - (float) (int) fCurrFrame);
-    Factor = (Factor * (Factor!=1.f)*1.f);
+   
+
     
 
     Animation->Factor= Factor;
@@ -532,7 +552,7 @@ float Delta,float BASE_FPS)
     printf("(%x -%d-)=(%x)(%x) %d -> %d | ",Animation->FLAG,Animation->FLAG,IS_REVERSED,IS_LOOPING,CurrFrame,NextFrame);
     printf("%f -> %f | ",Animation->CurrentFrame,FollFrame);
     printf("f: %f\n",Factor);
-  */    
+     */
 
     Animation->Current_Pose = Data->Poses+(Data->PosesCount*CurrFrame);
     Animation->Next_Pose  = Data->Poses+(Data->PosesCount*NextFrame);
@@ -580,7 +600,8 @@ void (*Processing_Function) (struct __Joint_Struct *,void*,void*,void*,float,voi
     array_foreach(struct _LD_Instance_Animation_Descriptor,CurrAnim,
             Anim->Animations_Array,Anim->Animations_Array_Size)
     {
-        if(!_checkbits(CurrAnim->FLAG,1<<7))
+        //printf("->IGN: %x\n",CurrAnim->FLAG);
+        if(!(_checkbits(CurrAnim->FLAG,128)) && CurrAnim->Data!=NULL)
         {
         struct __Joint_Struct * AJoints=CurrAnim->Current_Pose;
         struct __Joint_Struct * NJoints=CurrAnim->Next_Pose;
@@ -627,8 +648,9 @@ void LD_3D_Update(float Delta, float BASE_FPS)
         {      
                 /* Update animations, update poses pointers*/
             array_range(InstanceStructdef,Iexp,Vex->First_instance,Vex->Last_instance)
-            {
+            {         
                 struct LD_Instance_Animation * Anim = &Iexp->Animation;
+                
                 struct _LD_Instance_Animation_Descriptor * Anim_Arr = Anim->Animations_Array;
                             
                 /*If the array is null, then its size must be 0*/
