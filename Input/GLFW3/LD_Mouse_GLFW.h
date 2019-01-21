@@ -15,8 +15,20 @@ bit 5: Wheel down
 bit 6: Mouse activated
 bit 7: Mouse in screen
 **/
-    double Relative_Position_X;    ///<-- Posici�n normalizada del Mouse en X
-    double Relative_Position_Y;    ///<-- Posici�n normalizada del Mouse en Y
+    struct
+    {
+        struct _LD_GLFW_Mouse_Position_Double
+        {
+            double x,y;
+        }Relative;
+    }Pixel;
+
+    struct _LD_GLFW_Mouse_Position_Plane
+    {
+        float x,y;
+    }Space;
+
+ 
     char Flags;           ///<-- Bandera de botones del Mouse
 } LD_Mouse;
 
@@ -55,8 +67,13 @@ void LD_GLFW_Mouse_Update(GLFWwindow* window)
             {/*printf("%x\n",flag)*/;*ptr |= (flag);*ptr|=8;}
     }
 
-    glfwGetCursorPos(window, &LD_Mouse.Relative_Position_X,&LD_Mouse.Relative_Position_Y);
+    glfwGetCursorPos(window, &LD_Mouse.Pixel.Relative.x,&LD_Mouse.Pixel.Relative.y);
 
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+    LD_Mouse.Space.x = (float) (-1.0+((LD_Mouse.Pixel.Relative.x/(width*1.0))*2.0));
+    LD_Mouse.Space.y = (float) (-1.0+((LD_Mouse.Pixel.Relative.y/(height*1.0))*2.0));
 }
 
 #endif

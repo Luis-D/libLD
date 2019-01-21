@@ -39,6 +39,12 @@ extern "C"
     void M4x4V4_PseudoV3_W1_MUL (float * Matrix, float * Vector, float * VectorResultado);
     void M4x4_PseudoM3x3_V4_PseudoV3_W1_MUL 
     (float * Matrix, float * Vector, float * VectorResultado);
+    void M4INVERSE(void * Result, void * Matrix);
+#define M4x4_Inverse(Matrix,Return) M4INVERSE(Return,Matrix)
+	
+    void M2MUL(void * Result, void * A, void * B);
+   #define M2x2MUL(A,B,R) M2MUL(R,A,B);
+	float M2DET(void * Matrix);
 
     void NormalizeVec2 (float * Vec2, float * Result);
     void NormalizeDoubleVec2 (double * Vec2, double * Result);
