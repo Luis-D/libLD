@@ -2,7 +2,7 @@
 #define _LD_IQM_H
 
 #include <stdlib.h>
-#include "../Extern/LD_Math.h"
+#include "../LDM/LD_Math.h"
 #include "../libLDExtra/LD_Tricks.h"
 
 #define FROMBLENDER
@@ -77,26 +77,7 @@ struct _IQM_Pose_Struct
 
 static void __IQM_Joint_SWAP_Y_Z__( struct _IQM_Joint_Struct * Poses,unsigned int JointsCount)
 {
-    struct _IQM_Joint_Struct* END = Poses+JointsCount;
-    int Quaternion[4]={0x3f3504f3,0x80000000,0x80000000,0xbf3504f3}; //<- It solves the angle of the root
-    //x = sqr(2)/2, y=0, z=0, w = -sqr(2)/2
-    int Quaternion_2[4]={0xbf3504f3,0x80000000,0x80000000,0xbf3504f3}; //<- It solves the angle of the rest
-    //x = -sqr(2)/2, y=0, z=0, w = -sqr(2)/2
-    
-    for(Poses;Poses<END;Poses++)
-    {
-	if(Poses->parent == -1)
-	{QuaternionMUL((float*)Quaternion,Poses->rotate,Poses->rotate);}
-	else
-	{
-
-	    QuaternionRotateV3((float*)Quaternion_2,(float*)Poses->translate,(float*)Poses->translate);
  
-	    _swap(*(int*)(Poses->rotate+1),*(int*)(Poses->rotate+2));
-	    Poses->rotate[1]*=-1;
-	}
-    }
-
 }
 
 static void __IQM_Poses_into_Joints(struct _IQM_Pose_Struct * Poses, struct _IQM_Joint_Struct * Return,
@@ -206,17 +187,20 @@ void __IQM_Joints_Concatenate(struct _IQM_Joint_Struct * JointsBuffer,unsigned i
 	if(Joint->parent ==-1){continue;}
 
 	struct _IQM_Joint_Struct * Parent = JointsBuffer+(Poses_Per_Frame*FrameCounter)+Joint->parent;
+    //printf("R: (%f,%f,%f)\n",Parent->rotate[0],Parent->rotate[1],Parent->rotate[2]);
 
-//	printf("S: (%f,%f,%f)\n",Parent->scale[0],Parent->scale[1],Parent->scale[2]);
-	V3V3MUL(Joint->translate,Parent->scale,Joint->translate);
+	//printf("S: (%f,%f,%f)\n",Parent->scale[0],Parent->scale[1],Parent->scale[2]);
+	V3MUL(Joint->translate,Joint->translate,Parent->scale);
 	//printf("Frm: %d\n",FrameCounter);
 	//printf("INI: (%f,%f,%f), (%f,%f,%f,%f)\n",Joint->translate[0],Joint->translate[1],Joint->translate[2],Joint->rotate[0],Joint->rotate[1],Joint->rotate[2],Joint->rotate[3]);
-	QuaternionRotateV3(Parent->rotate,Joint->translate,Joint->translate);
+	QUATROTV3(Joint->translate,Parent->rotate,Joint->translate);
 	//printf("ROT: (%f,%f,%f) by (%f,%f,%f,%f)\n",Joint->translate[0],Joint->translate[1],Joint->translate[2],Parent->rotate[0],Parent->rotate[1],Parent->rotate[2],Parent->rotate[3]);
-        QuaternionMUL(Joint->rotate,Parent->rotate,Joint->rotate);
-        V3V3ADD(Joint->translate,Parent->translate,Joint->translate);
+        
+        
+        QUATMUL(Joint->rotate,Parent->rotate,Joint->rotate);
+        V3ADD(Joint->translate,Parent->translate,Joint->translate);
 	//printf("TLT: (%f,%f,%f) by (%f,%f,%f)\n",Joint->translate[0],Joint->translate[1],Joint->translate[2],Parent->translate[0],Parent->translate[1],Parent->translate[2]);
-	//printf("FIN: (%f,%f,%f), (%f,%f,%f,%f)\n",Joint->translate[0],Joint->translate[1],Joint->translate[2],Joint->rotate[0],Joint->rotate[1],Joint->rotate[2],Joint->rotate[3]);
+    //printf("FIN: (%f,%f,%f), (%f,%f,%f,%f)\n",Joint->translate[0],Joint->translate[1],Joint->translate[2],Joint->rotate[0],Joint->rotate[1],Joint->rotate[2],Joint->rotate[3]);
 	//printf("\n");
 
     }

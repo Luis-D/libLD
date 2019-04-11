@@ -54,6 +54,7 @@ void GL_Utils_init()
      1,1 ,  1,0};
    unsigned int Indices2 []={0,2,1,1,2,3};
     __LD_GL_SIMPLE_ATTR0_OBJ_CREATE_(&GL_Square,PT2,sizeof(PT2),Indices2, sizeof(Indices2));
+
 }
 
 

@@ -86,9 +86,11 @@ void (*glGenFramebuffers)(GLsizei,GLuint*);
 void (*glBindFramebuffer)(GLenum,GLuint);
 void (*glFramebufferTexture2D)(GLenum,GLenum,GLenum,GLuint,GLint);
 void (*glUseProgram)(GLuint);
+void (*glActiveTexture)(GLenum);
 
 void GL_Extensions_Init(void)
 {
+    glActiveTexture = (void(*)(GLenum))_GetProcAddress("glActiveTexture");
     glUseProgram = (void(*)(GLuint))_GetProcAddress("glUseProgram");
 
     glGenFramebuffers = (void(*)(GLsizei,GLuint*))_GetProcAddress("glGenFramebuffers");

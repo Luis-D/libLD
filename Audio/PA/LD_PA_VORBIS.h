@@ -8,6 +8,9 @@
 #define _LD_PA_VORBIS_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "../../libLDExtra/LD_Tricks.h"
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
@@ -16,8 +19,8 @@
 
 #include <string.h>
 
-#include "../LD_Audio.h"
-#include "../LD_Utils.h"
+#include "../../Extern/LD_Audio.h"
+//#include "../../Extern/LD_Utils.h"
 
 #define SAMPLE_SIZE 256
 #define SAMPLE_RATE 44100
@@ -69,6 +72,8 @@ static int AudioMixerCallBack( const void *inputBuffer, void *outputBuffer,
                            PaStreamCallbackFlags statusFlags,
                            void *userData )
 {
+
+
     (void) inputBuffer;
     AudioMixer * _AudioMixer_ = (AudioMixer *) userData;
 
@@ -146,18 +151,18 @@ static int AudioMixerCallBack( const void *inputBuffer, void *outputBuffer,
 
                 if(!((flag&64) == 64))
                 {
-                    ChangeVolume16bits(tempout,tempout,SAMPLE_SIZE,Sx->Volumen_FixedPoint);
+                    //ChangeVolume16bits(tempout,tempout,SAMPLE_SIZE,Sx->Volumen_FixedPoint);
 
                     if((flag&11)==11){HaySonido=1;}
 
                     if(PrimeraMuestra == 1)
                     {
-                        fastmemcpy  (outbuff,tempout,SAMPLE_SIZE);
+                        memcpy  (outbuff,tempout,SAMPLE_SIZE);
                         PrimeraMuestra = 0;
                     }
                     else
                     {
-                        Buffer_16bits_ADD((uint16_t*)outbuff,(uint16_t*)tempout,SAMPLE_SIZE);
+                        //Buffer_16bits_ADD((uint16_t*)outbuff,(uint16_t*)tempout,SAMPLE_SIZE);
                     }
                 }
             }
@@ -165,8 +170,8 @@ static int AudioMixerCallBack( const void *inputBuffer, void *outputBuffer,
     }
 
 
-    if(HaySonido==1){fastmemcpy (out,outbuff,SAMPLE_SIZE);}
-    else{Buffer_Clear(out,SAMPLE_SIZE);}
+    if(HaySonido==1){memcpy (out,outbuff,SAMPLE_SIZE);}
+    else{memset(out,0,SAMPLE_SIZE);}
 
     return paContinue;
 }
@@ -222,7 +227,7 @@ void AudioMixer_DealocateBuffer(struct _PA_SoundBuffer_struct_ * SoundBufferPTR)
 
 int AudioMixer_AddSound_file(const char * file, struct _PA_SoundStruct_struct_ * Sound,char FLAG)
 {
-    if(!(CheckBit(Sound->Flag ,0)))
+    if(!(_checkbits(Sound->Flag ,1)))
     {
         FILE * infile; ///Check if this file gets closed sometime
         infile = fopen(file,"rb");
@@ -238,7 +243,7 @@ int AudioMixer_AddSound_file(const char * file, struct _PA_SoundStruct_struct_ *
     return 0;
 }
 
-
+/*
 void AudioMixer_Update(AudioMixer * _AudioMixer_)
 {
     struct _PA_SoundBuffer_struct_ * BufferPTR = (_AudioMixer_->Buffer);
@@ -261,7 +266,7 @@ void AudioMixer_Update(AudioMixer * _AudioMixer_)
     }
     ///------------------///
 }
-
+*/
 
 int Set_AudioMixer(AudioMixer * _AudioMixer_, PaStream   **stream )
 {
@@ -295,5 +300,8 @@ void LD_Audio_Play_Stop(struct _PA_SoundStruct_struct_ * _Audio_)
 
 void LD_Audio_Play_Continue(struct _PA_SoundStruct_struct_ * _Audio_)
 {_Audio_->Flag |= 2;}
+
+void LD_Audio_ToggleLoop(struct _PA_SoundStruct_struct_ * _Audio_)
+{_Audio_->Flag ^= 4;}
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef __OES_DDS_H_
 #define __OES_DDS_H_
 
+#include <string.h>
+
 /*This loads DDS textures for OPENGL ES*/
 
 //SOURCE: https://gist.github.com/Luis-D/826683f5fcbea7c21a7555bc8ea0d6f4
